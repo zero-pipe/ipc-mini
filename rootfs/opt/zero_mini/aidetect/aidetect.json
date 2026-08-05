@@ -1,0 +1,6 @@
+{
+   "aidetect" : {
+      "enable" : 0,
+      "model_file" : "/opt/zero_ipc/aidetect/model/det_hvf_hor.bin"
+   }
+}

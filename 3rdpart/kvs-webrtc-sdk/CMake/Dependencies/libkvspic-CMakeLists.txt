@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.6.3)
+project(libkvspic-download NONE)
+if(NOT KVS_THIRDPARTY_ROOT)
+  message(FATAL_ERROR "KVS_THIRDPARTY_ROOT is required (sibling 3rdpart/ directory)")
+endif()
+include(ExternalProject)
+message(STATUS "Building KVS PIC from ${KVS_THIRDPARTY_ROOT}/kvs-pic")
+ExternalProject_Add(libkvspic-download
+    SOURCE_DIR        ${KVS_THIRDPARTY_ROOT}/kvs-pic
+    BINARY_DIR        ${CMAKE_CURRENT_BINARY_DIR}/build/src
+    DOWNLOAD_COMMAND  ""
+    UPDATE_COMMAND    ""
+    CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${OPEN_SRC_INSTALL_PREFIX}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DBUILD_DEPENDENCIES=OFF
+      -DBUILD_SHARED_LIBS=OFF
+      -DBUILD_TEST=OFF
+      -DKVS_DEFAULT_STACK_SIZE=${KVS_DEFAULT_STACK_SIZE}
+      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+    BUILD_ALWAYS      TRUE
+    TEST_COMMAND      ""
+)

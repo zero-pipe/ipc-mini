@@ -1,0 +1,26 @@
+{
+   "net_service": {
+      "webrtc": {
+         "enable": 1,
+         "signaling_url": "ws://114.55.94.148:8089/ws",
+         "signaling_token": "",
+         "room": "door-1",
+         "preview_stream_id": 1,
+         "detections_enable": 1,
+         "disable_twcc": 1,
+         "rolling_buffer_sec": 1,
+         "expected_bitrate_kbps": 500,
+         "max_viewers": 3,
+         "ice_servers": [
+            {
+               "urls": "stun:114.55.94.148:3478"
+            },
+            {
+               "urls": "turn:114.55.94.148:3478?transport=udp",
+               "username": "zeromini",
+               "credential": "cqw881013"
+            }
+         ]
+      }
+   }
+}

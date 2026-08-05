@@ -1,0 +1,14 @@
+#ifndef ZTK_CONFIG_H
+#define ZTK_CONFIG_H
+
+#define ZTK_VERSION_MAJOR 0
+#define ZTK_VERSION_MINOR 8
+#define ZTK_VERSION_PATCH 0
+
+#define ZTK_PLATFORM_LINUX 1
+
+#define ZTK_HAVE_EPOLL 1
+#define ZTK_HAVE_PIPE2 1
+#define ZTK_HAVE_POSIX_SEM 1
+
+#endif /* ZTK_CONFIG_H */

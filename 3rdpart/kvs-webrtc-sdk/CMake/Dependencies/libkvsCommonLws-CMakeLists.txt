@@ -1,0 +1,38 @@
+cmake_minimum_required(VERSION 3.6.3)
+
+project(libkvsCommonLws-download NONE)
+
+include(ExternalProject)
+
+if (PRODUCER_C_VERSION_OVERRIDE)
+  set(KVSPRODUCERC_GIT_TAG "${PRODUCER_C_VERSION_OVERRIDE}")
+  message(WARNING "Override Producer-C to a custom version: ${KVSPRODUCERC_GIT_TAG}")
+else()
+  set(KVSPRODUCERC_GIT_TAG "v1.6.4")
+endif()
+
+ExternalProject_Add(libkvsCommonLws-download
+    GIT_REPOSITORY    https://github.com/awslabs/amazon-kinesis-video-streams-producer-c.git
+    GIT_TAG           ${KVSPRODUCERC_GIT_TAG}
+    GIT_PROGRESS      TRUE
+    GIT_SHALLOW       TRUE
+    PREFIX            ${CMAKE_CURRENT_BINARY_DIR}/build
+    LIST_SEPARATOR    |
+    CMAKE_ARGS
+      -DCMAKE_INSTALL_PREFIX=${OPEN_SRC_INSTALL_PREFIX}
+      -DCMAKE_PREFIX_PATH=${OPEN_SRC_INSTALL_PREFIX}
+      -DBUILD_COMMON_LWS=ON
+      -DBUILD_COMMON_CURL=OFF
+      -DBUILD_DEPENDENCIES=FALSE
+      -DOPEN_SRC_INSTALL_PREFIX=${OPEN_SRC_INSTALL_PREFIX}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DUSE_OPENSSL=${USE_OPENSSL}
+      -DUSE_MBEDTLS=${USE_MBEDTLS}
+      -DKVS_DEFAULT_STACK_SIZE=${KVS_DEFAULT_STACK_SIZE}
+      -DCMAKE_C_FLAGS=-D_GNU_SOURCE\ ${CMAKE_C_FLAGS}
+      -DBUILD_STATIC=${BUILD_STATIC}
+      -DPARALLEL_BUILD=${PARALLEL_BUILD}
+      -DPIC_VERSION_OVERRIDE=${PIC_VERSION_OVERRIDE}
+    BUILD_ALWAYS      TRUE
+    TEST_COMMAND      ""
+)

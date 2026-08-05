@@ -1,0 +1,15 @@
+[submodule "3rdpart/mbedtls-2.28.8"]
+	path = 3rdpart/mbedtls-2.28.8
+	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "3rdpart/libsrtp"]
+	path = 3rdpart/libsrtp
+	url = https://github.com/cisco/libsrtp.git
+[submodule "3rdpart/usrsctp"]
+	path = 3rdpart/usrsctp
+	url = https://github.com/sctplab/usrsctp.git
+[submodule "3rdpart/kvs-pic"]
+	path = 3rdpart/kvs-pic
+	url = https://github.com/awslabs/amazon-kinesis-video-streams-pic.git
+[submodule "3rdpart/zero-tool-kit"]
+	path = 3rdpart/zero-tool-kit
+	url = https://github.com/zero-pipe/zero-tool-kit.git

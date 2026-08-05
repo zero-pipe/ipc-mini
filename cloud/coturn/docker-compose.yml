@@ -1,0 +1,24 @@
+services:
+  coturn:
+    image: coturn/coturn:latest
+    # Required on Aliyun: advertise public IP but bind/relay on host NIC.
+    # Without this, logs show 172.17/172.19 relay and CREATE_PERMISSION → 403.
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+
+  signaling:
+    build: ../signaling
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    volumes:
+      - ../signaling:/app
+      - /app/node_modules
+    environment:
+      PORT: "8089"
+      SIGNALING_PATH: "/ws"
+      MAX_VIEWERS: "3"
+      # SIGNALING_TOKEN: "replace_me"

@@ -1,0 +1,53 @@
+# Build outputs
+/build/
+/zero_mini
+/zero_mini.map
+*.o
+*.d
+*.log
+*.exe
+
+# Static/shared libs: ignore globally, but allow vendored freetype .a
+*.a
+*.so
+!/3rdpart/freetype-2.7.1/lib/**/*.a
+
+# Local tooling / publish helpers (do not commit)
+/scripts/
+/docs/
+
+# Markdown: only root README
+*.md
+!/README.md
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local deploy / NFS leftovers / backups
+/nfs/
+*_deploy/
+*.bak
+/board/Makefile.zero_ipc.bak
+
+# 3rdpart build trees (sources/submodules are tracked)
+/3rdpart/**/build/
+/3rdpart/**/build-musl/
+/3rdpart/**/open-source/
+/3rdpart/kvs-webrtc-sdk/.git/
+/3rdpart/**/.zero-mini-origin
+# Local submodule/vendor scratch
+/_3rdpart_bak_for_submodule/
+/3rdpart/kvs-webrtc-sdk.git.bak/
+
+# Vendored KVS SDK: reject reintroduced upstream-only trees
+/3rdpart/kvs-webrtc-sdk/tst/
+/3rdpart/kvs-webrtc-sdk/samples/
+/3rdpart/kvs-webrtc-sdk/docs/
+/3rdpart/kvs-webrtc-sdk/.github/
+/3rdpart/kvs-webrtc-sdk/scripts/
+/3rdpart/kvs-webrtc-sdk/bench/

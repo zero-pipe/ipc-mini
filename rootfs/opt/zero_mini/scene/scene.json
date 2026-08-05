@@ -1,0 +1,7 @@
+{
+   "scene" : {
+      "dir_path" : "/opt/zero_ipc/scene/param/sensor_sc4336p",
+      "enable" : 1,
+      "mode" : 0
+   }
+}

@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eef5fc" />
+  <title>Zero Mini · 智能看护</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef5fc;
+      --surface: #ffffff;
+      --surface-strong: #f5f9fe;
+      --surface-soft: #eaf3fd;
+      --line: #d9e6f3;
+      --line-strong: #bfd3e8;
+      --text: #17324d;
+      --muted: #657d96;
+      --primary: #2474e5;
+      --primary-hover: #1766d3;
+      --success: #169b69;
+      --warning: #d68a19;
+      --danger: #df5262;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 85% -10%, rgba(70, 142, 234, .14), transparent 34rem),
+        radial-gradient(circle at -15% 65%, rgba(88, 171, 234, .08), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .16s ease, border-color .16s ease, box-shadow .16s ease,
+        color .16s ease, opacity .16s ease, transform .16s ease;
+    }
+
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid rgba(91, 155, 255, .9);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: 24px clamp(16px, 3vw, 36px) 42px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      border: 1px solid #b9d2f2;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #e7f2ff, #f5f9ff);
+      color: var(--primary);
+      box-shadow: 0 5px 14px rgba(42, 108, 190, .1);
+    }
+
+    .brand-mark svg { width: 24px; height: 24px; }
+    .brand h1 { margin: 0; font-size: 21px; letter-spacing: .01em; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+    .connection-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .85);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(30, 77, 125, .06);
+    }
+
+    .state-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #91a5b9;
+    }
+
+    .connection-state[data-tone="working"] .state-dot {
+      background: var(--warning);
+      animation: pulse 1.2s infinite;
+    }
+
+    .connection-state[data-tone="online"] {
+      border-color: #b9e7d5;
+      background: #edf9f4;
+      color: #157854;
+    }
+    .connection-state[data-tone="online"] .state-dot {
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(22, 155, 105, .09);
+    }
+    .connection-state[data-tone="error"] .state-dot { background: var(--danger); }
+
+    @keyframes pulse {
+      50% { opacity: .35; }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 350px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .96);
+      overflow: hidden;
+      box-shadow: 0 14px 36px rgba(43, 85, 126, .08);
+    }
+
+    .viewer-card { min-width: 0; }
+
+    .viewer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 56px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fbfdff, #f6faff);
+    }
+
+    .viewer-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .live-badge {
+      display: none;
+      padding: 4px 8px;
+      border-radius: 5px;
+      border: 1px solid #f4c5cb;
+      background: #fff0f2;
+      color: #cf3f50;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .08em;
+    }
+
+    .live-badge.visible { display: inline-flex; }
+
+    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+    .talk-button {
+      min-height: 34px;
+      padding: 0 14px;
+      border: 1px solid #c5d5e6;
+      border-radius: 10px;
+      background: #f4f8fc;
+      color: #2f4f6f;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .talk-button:hover { background: #eaf2fa; }
+    .talk-button.active {
+      border-color: #2f9e6b;
+      background: #e8f8f0;
+      color: #1f7a52;
+    }
+    .talk-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .ghost-button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      background: #f5f9fe;
+      color: #4f6d8b;
+      font-size: 12px;
+    }
+
+    .ghost-button:hover {
+      border-color: var(--line-strong);
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(70, 116, 158, .18), transparent 38%),
+        linear-gradient(145deg, #172d42, #102438);
+      box-shadow: inset 0 0 60px rgba(4, 18, 31, .18);
+    }
+
+    video, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    video { object-fit: contain; background: #12283c; }
+    canvas { pointer-events: none; }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      justify-items: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty-state.hidden { display: none; }
+
+    .empty-icon {
+      width: 52px;
+      height: 52px;
+      padding: 13px;
+      border: 1px solid rgba(171, 203, 232, .3);
+      border-radius: 15px;
+      color: #b9d7f1;
+      background: rgba(42, 75, 106, .42);
+      box-shadow: 0 8px 24px rgba(5, 19, 32, .14);
+    }
+
+    .empty-state strong { color: #edf6ff; font-size: 15px; }
+    .empty-state span { max-width: 320px; color: #adc2d6; font-size: 12px; line-height: 1.6; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--line);
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 14px 16px;
+      border-right: 1px solid var(--line);
+      background: #f8fbff;
+    }
+
+    .metric:last-child { border-right: 0; }
+    .metric-label { display: block; color: var(--muted); font-size: 12px; }
+    .metric-value {
+      display: block;
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #234765;
+      font-size: 14px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .sidebar { display: grid; height: 100%; }
+    .panel { padding: 20px; }
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 16px;
+      letter-spacing: .01em;
+    }
+
+    .connection-panel {
+      display: flex;
+      height: 100%;
+      flex-direction: column;
+    }
+
+    .device-overview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 13px;
+      border: 1px solid #e0ebf6;
+      border-radius: 12px;
+      background: #f7faff;
+    }
+
+    .device-avatar {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
+      border: 1px solid #c9ddf2;
+      border-radius: 11px;
+      background: #eaf4ff;
+      color: var(--primary);
+    }
+
+    .device-avatar svg { width: 21px; height: 21px; }
+    .device-overview strong { display: block; color: var(--text); font-size: 14px; }
+    .device-overview span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+    .panel-divider {
+      height: 1px;
+      margin: 19px 0 17px;
+      background: var(--line);
+    }
+
+    .section-title {
+      margin: 0 0 9px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .field { margin-bottom: 15px; }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: #536f8b;
+      font-size: 12px;
+      font-weight: 550;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 46px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      background: #f8fbff;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .field input:focus {
+      border-color: rgba(59, 130, 246, .75);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+      background: #ffffff;
+    }
+
+    .primary-button {
+      width: 100%;
+      background: linear-gradient(180deg, #3383ef, #216fdc);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(29, 102, 214, .2), inset 0 1px 0 rgba(255, 255, 255, .18);
+    }
+
+    .primary-button:hover {
+      background: linear-gradient(180deg, #2879e8, #1764cc);
+      box-shadow: 0 10px 24px rgba(29, 102, 214, .26), inset 0 1px 0 rgba(255, 255, 255, .18);
+    }
+    .primary-button.disconnect {
+      border: 1px solid rgba(240, 113, 126, .26);
+      background: #fff2f4;
+      color: #ce4051;
+      box-shadow: none;
+    }
+    .primary-button.disconnect:hover { background: #ffe8ec; }
+
+    .helper {
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .status-list { display: grid; }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      border-bottom: 1px solid #edf3f9;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-row:last-child { border-bottom: 0; }
+
+    .status-value {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      border: 1px solid #d7e2ec;
+      border-radius: 9px;
+      background: #f1f5f9;
+      color: #8b9caf;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
+      transition: color .18s ease, border-color .18s ease, background .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .status-value::before {
+      content: "—";
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .status-value b {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .status-value .mini-dot { display: none; }
+
+    .status-row[data-tone="online"] .status-value {
+      border-color: #169b69;
+      background: #20aa78;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(22, 155, 105, .2);
+    }
+
+    .status-row[data-tone="online"] .status-value::before { content: "✓"; }
+
+    .status-row[data-tone="working"] .status-value {
+      border-color: #dc921f;
+      background: #e9a23b;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(214, 138, 25, .18);
+    }
+
+    .status-row[data-tone="working"] .status-value::before {
+      content: "···";
+      padding-bottom: 5px;
+      letter-spacing: -1px;
+    }
+
+    .status-row[data-tone="error"] .status-value {
+      border-color: #d94a5a;
+      background: #e35d6a;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(223, 82, 98, .18);
+    }
+
+    .status-row[data-tone="error"] .status-value::before { content: "×"; }
+
+    .status-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      border: 1px solid #dce8f4;
+      border-radius: 9px;
+      background: #f4f8fc;
+      color: #7790aa;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .status-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .status-row[data-tone="online"] .status-icon {
+      border-color: #bce6d6;
+      background: #ecf9f4;
+      color: var(--success);
+    }
+
+    .status-row[data-tone="working"] .status-icon {
+      border-color: #f1d9af;
+      background: #fff8e9;
+      color: var(--warning);
+    }
+
+    .status-row[data-tone="error"] .status-icon {
+      border-color: #f2c4ca;
+      background: #fff0f2;
+      color: var(--danger);
+    }
+
+    .mini-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9bacc0;
+    }
+
+    .mini-dot.online { background: var(--success); }
+    .mini-dot.working { background: var(--warning); }
+    .mini-dot.error { background: var(--danger); }
+
+    .log-card { grid-column: 1 / -1; }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 50px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f7faff;
+    }
+
+    .log-header h2 { margin: 0; font-size: 15px; }
+
+    #log {
+      height: 184px;
+      overflow: auto;
+      padding: 12px 16px 15px;
+      background: #f9fbfe;
+      font: 12px/1.75 ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    .log-line {
+      display: grid;
+      grid-template-columns: 72px 58px minmax(0, 1fr);
+      gap: 8px;
+      padding: 3px 0;
+      color: #3d5874;
+    }
+
+    .log-time { color: #8a9eb3; }
+    .log-level { color: #397bc5; font-weight: 700; }
+    .log-line.warn .log-level { color: var(--warning); }
+    .log-line.error .log-level { color: var(--danger); }
+    .log-line.success .log-level { color: var(--success); }
+    .log-message { overflow-wrap: anywhere; }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #b6c7d9 transparent;
+    }
+
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background: #b6c7d9;
+      background-clip: padding-box;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { grid-template-columns: 1fr; }
+      .log-card { grid-column: 1; }
+      .connection-panel { height: auto; }
+    }
+
+    @media (max-width: 620px) {
+      .app { padding-top: 14px; }
+      .topbar { align-items: flex-start; margin-bottom: 15px; }
+      .brand p { display: none; }
+      .connection-state { min-height: 32px; padding: 0 10px; font-size: 11px; }
+      .sidebar { grid-template-columns: 1fr; gap: 12px; }
+      .layout { gap: 12px; }
+      .viewer-toolbar { min-height: 48px; }
+      .panel { padding: 17px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .log-line { grid-template-columns: 64px 50px minmax(0, 1fr); gap: 5px; }
+      #log { height: 160px; padding-inline: 11px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M4 9.5 12 4l8 5.5v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+            <circle cx="12" cy="13" r="3" />
+          </svg>
+        </div>
+        <div>
+          <h1>Zero Mini</h1>
+          <p>实时画面与智能目标检测</p>
+        </div>
+      </div>
+      <div id="globalState" class="connection-state" data-tone="idle">
+        <span class="state-dot"></span>
+        <span id="globalStateText">尚未连接</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <article class="card viewer-card">
+        <div class="viewer-toolbar">
+          <div class="viewer-title">
+            <span>实时画面</span>
+            <span id="liveBadge" class="live-badge">LIVE</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="talk" class="talk-button" type="button" disabled>开始对讲</button>
+            <button id="fullscreen" class="ghost-button" type="button">全屏查看</button>
+          </div>
+        </div>
+
+        <div id="stage" class="stage">
+          <video id="v" autoplay playsinline muted></video>
+          <canvas id="c"></canvas>
+          <div id="emptyState" class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5z" />
+              <path d="m16 10 4-2v8l-4-2z" />
+            </svg>
+            <strong id="emptyTitle">等待设备连接</strong>
+            <span id="emptyHint">填写房间信息并点击“开始观看”，画面将在连接成功后自动显示。</span>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <span class="metric-label">视频状态</span>
+            <span id="metricVideo" class="metric-value">未接收</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">画面尺寸</span>
+            <span id="metricSize" class="metric-value">—</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">检测目标</span>
+            <span id="metricObjects" class="metric-value">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">数据通道</span>
+            <span id="metricData" class="metric-value">未连接</span>
+          </div>
+        </div>
+      </article>
+
+      <aside class="sidebar">
+        <section class="card panel connection-panel">
+          <h2>设备连接</h2>
+          <div class="device-overview">
+            <i class="device-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                <rect x="3.5" y="6" width="13.5" height="12" rx="2.5" />
+                <path d="m17 10 3.5-2v8L17 14z" />
+                <circle cx="10.2" cy="12" r="2.7" />
+              </svg>
+            </i>
+            <div>
+              <strong>Zero Mini 智能摄像机</strong>
+              <span>实时视频与 AI 目标检测</span>
+            </div>
+          </div>
+          <div class="field" hidden>
+            <label for="room">设备房间</label>
+            <input id="room" value="door-1" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field" hidden>
+            <label for="wsUrl">信令服务器</label>
+            <input id="wsUrl" value="ws://114.55.94.148:8089/ws" inputmode="url" autocomplete="url" spellcheck="false" />
+          </div>
+          <button id="go" class="primary-button" type="button">开始观看</button>
+          <p class="helper">最多支持 3 位家庭成员同时观看。移动网络下可能通过 TURN 中继连接。</p>
+
+          <div class="panel-divider"></div>
+          <h3 class="section-title">连接状态</h3>
+          <div class="status-list">
+            <div id="wsRow" class="status-row" data-tone="idle">
+              <span class="status-name">
+                <i class="status-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M5 16.5a10 10 0 0 1 14 0M8 13a6 6 0 0 1 8 0M11 9.8a2 2 0 0 1 2 0" />
+                    <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+                  </svg>
+                </i>
+                <span>信令服务</span>
+              </span>
+              <span class="status-value" title="未连接" aria-label="未连接"><i id="wsDot" class="mini-dot"></i><b id="wsState">未连接</b></span>
+            </div>
+            <div id="deviceRow" class="status-row" data-tone="working">
+              <span class="status-name">
+                <i class="status-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="4" y="6" width="13" height="12" rx="2.5" />
+                    <path d="m17 10 3-2v8l-3-2z" />
+                    <circle cx="10.5" cy="12" r="2.5" />
+                  </svg>
+                </i>
+                <span>设备状态</span>
+              </span>
+              <span class="status-value" title="等待连接" aria-label="等待连接"><i id="deviceDot" class="mini-dot"></i><b id="deviceState">等待连接</b></span>
+            </div>
+            <div id="iceRow" class="status-row" data-tone="idle">
+              <span class="status-name">
+                <i class="status-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="12" cy="12" r="8.5" />
+                    <path d="M3.8 12h16.4M12 3.5c2.2 2.3 3.2 5.1 3.2 8.5s-1 6.2-3.2 8.5C9.8 18.2 8.8 15.4 8.8 12S9.8 5.8 12 3.5Z" />
+                  </svg>
+                </i>
+                <span>ICE 网络</span>
+              </span>
+              <span class="status-value" title="未建立" aria-label="未建立"><i id="iceDot" class="mini-dot"></i><b id="iceState">未建立</b></span>
+            </div>
+            <div id="aiRow" class="status-row" data-tone="idle">
+              <span class="status-name">
+                <i class="status-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="5" y="5" width="14" height="14" rx="3" />
+                    <path d="M9 9v6M9 12h3M15 9v6M3 9h2M3 15h2M19 9h2M19 15h2M9 3v2M15 3v2M9 19v2M15 19v2" />
+                  </svg>
+                </i>
+                <span>AI 检测</span>
+              </span>
+              <span class="status-value" title="未连接" aria-label="未连接"><i id="aiDot" class="mini-dot"></i><b id="aiState">未连接</b></span>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="card log-card">
+        <div class="log-header">
+          <h2>连接日志</h2>
+          <div>
+            <button id="copyLog" class="ghost-button" type="button">复制</button>
+            <button id="clearLog" class="ghost-button" type="button">清空</button>
+          </div>
+        </div>
+        <div id="log" role="log" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const ui = {
+      go: $('go'),
+      room: $('room'),
+      wsUrl: $('wsUrl'),
+      video: $('v'),
+      canvas: $('c'),
+      stage: $('stage'),
+      empty: $('emptyState'),
+      emptyTitle: $('emptyTitle'),
+      emptyHint: $('emptyHint'),
+      globalState: $('globalState'),
+      globalStateText: $('globalStateText'),
+      liveBadge: $('liveBadge'),
+      log: $('log'),
+      talk: $('talk'),
+    };
+
+    const iceServers = [
+      { urls: 'stun:114.55.94.148:3478' },
+      {
+        urls: 'turn:114.55.94.148:3478?transport=udp',
+        username: 'zeromini',
+        credential: 'cqw881013',
+      },
+    ];
+
+    let pc = null;
+    let micStream = null;
+    let talkEnabled = false;
+    let audioSender = null;
+    let ws = null;
+    let masterId = null;
+    let dc = null;
+    let offerStarted = false;
+    let connectedIntent = false;
+    let logRecords = [];
+
+    function formatValue(value) {
+      if (value instanceof Error) return value.message;
+      if (typeof value === 'object') {
+        try { return JSON.stringify(value); } catch (_) { return String(value); }
+      }
+      return String(value);
+    }
+
+    function log(level, ...values) {
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      const message = values.map(formatValue).join(' ');
+      logRecords.push(`[${time}] [${level.toUpperCase()}] ${message}`);
+      if (logRecords.length > 300) {
+        logRecords = logRecords.slice(-300);
+        ui.log.firstElementChild?.remove();
+      }
+      const line = document.createElement('div');
+      line.className = `log-line ${level}`;
+      line.innerHTML =
+        `<span class="log-time">${time}</span>` +
+        `<span class="log-level">${level.toUpperCase()}</span>` +
+        `<span class="log-message"></span>`;
+      line.lastElementChild.textContent = message;
+      ui.log.appendChild(line);
+      ui.log.scrollTop = ui.log.scrollHeight;
+    }
+
+    function setGlobalState(text, tone = 'idle') {
+      ui.globalState.dataset.tone = tone;
+      ui.globalStateText.textContent = text;
+    }
+
+    function setStatus(name, text, tone = '') {
+      $(`${name}State`).textContent = text;
+      $(`${name}Dot`).className = `mini-dot ${tone}`;
+      $(`${name}Row`).dataset.tone = tone || 'idle';
+      const indicator = $(`${name}State`).parentElement;
+      indicator.title = text;
+      indicator.setAttribute('aria-label', text);
+    }
+
+    const peerStateText = {
+      new: '未建立',
+      connecting: '连接中',
+      connected: '在线',
+      disconnected: '已断开',
+      failed: '连接失败',
+      closed: '已关闭',
+    };
+
+    const iceStateText = {
+      new: '未建立',
+      checking: '检测中',
+      connected: '已连接',
+      completed: '已完成',
+      disconnected: '已断开',
+      failed: '连接失败',
+      closed: '已关闭',
+    };
+
+    function showEmpty(title, hint) {
+      ui.emptyTitle.textContent = title;
+      ui.emptyHint.textContent = hint;
+      ui.empty.classList.remove('hidden');
+    }
+
+    function updateButton() {
+      ui.go.textContent = connectedIntent ? '断开连接' : '开始观看';
+      ui.go.classList.toggle('disconnect', connectedIntent);
+      ui.room.disabled = connectedIntent;
+      ui.wsUrl.disabled = connectedIntent;
+    }
+
+    function clearCanvas() {
+      const ctx = ui.canvas.getContext('2d');
+      ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+      $('metricObjects').textContent = '0';
+    }
+
+    function drawBoxes(message) {
+      const canvas = ui.canvas;
+      const context = canvas.getContext('2d');
+      const width = ui.video.videoWidth || 720;
+      const height = ui.video.videoHeight || 480;
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      context.clearRect(0, 0, width, height);
+      context.lineWidth = Math.max(2, width / 360);
+      context.font = `600 ${Math.max(13, width / 55)}px sans-serif`;
+      context.textBaseline = 'bottom';
+
+      const objects = message.objs || [];
+      $('metricObjects').textContent = String(objects.length);
+      objects.forEach((object) => {
+        const x = object.x * width;
+        const y = object.y * height;
+        const boxWidth = object.bw * width;
+        const boxHeight = object.bh * height;
+        const label = `${object.cls} ${(Number(object.s) || 0).toFixed(2)}`;
+        const labelWidth = context.measureText(label).width + 12;
+        const labelHeight = Math.max(21, width / 38);
+
+        context.strokeStyle = '#42e8a7';
+        context.fillStyle = 'rgba(6, 20, 30, .82)';
+        context.strokeRect(x, y, boxWidth, boxHeight);
+        context.fillRect(x, Math.max(0, y - labelHeight), labelWidth, labelHeight);
+        context.fillStyle = '#caffea';
+        context.fillText(label, x + 6, Math.max(labelHeight - 4, y - 4));
+      });
+    }
+
+    function preferPcmu(transceiver) {
+      if (!transceiver || typeof transceiver.setCodecPreferences !== 'function') {
+        return;
+      }
+      const caps = RTCRtpSender.getCapabilities?.('audio');
+      if (!caps?.codecs?.length) return;
+      const pcmu = caps.codecs.filter(
+        (codec) => String(codec.mimeType || '').toLowerCase() === 'audio/pcmu');
+      if (pcmu.length) {
+        try { transceiver.setCodecPreferences(pcmu); } catch (_) {}
+      }
+    }
+
+    function setTalkUi(enabled) {
+      talkEnabled = enabled;
+      ui.talk.classList.toggle('active', enabled);
+      ui.talk.textContent = enabled ? '结束对讲' : '开始对讲';
+    }
+
+    async function enableTalk(enable) {
+      if (!pc || !audioSender) {
+        log('warn', '对讲尚未就绪');
+        return;
+      }
+      if (!enable) {
+        const track = audioSender.track;
+        if (track) track.enabled = false;
+        setTalkUi(false);
+        log('info', '对讲已关闭（本地静音）');
+        return;
+      }
+      try {
+        if (!micStream) {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+            video: false,
+          });
+        }
+        const micTrack = micStream.getAudioTracks()[0];
+        if (!micTrack) throw new Error('no microphone track');
+        micTrack.enabled = true;
+        await audioSender.replaceTrack(micTrack);
+        setTalkUi(true);
+        // User gesture: allow remote audio through the video element.
+        ui.video.muted = false;
+        await ui.video.play().catch(() => {});
+        log('success', '对讲已开启（G711U/PCMU）');
+      } catch (error) {
+        setTalkUi(false);
+        log('error', '打开麦克风失败：', error);
+      }
+    }
+
+    function closePeer() {
+      offerStarted = false;
+      masterId = null;
+      setTalkUi(false);
+      ui.talk.disabled = true;
+      audioSender = null;
+      if (micStream) {
+        micStream.getTracks().forEach((track) => track.stop());
+        micStream = null;
+      }
+      if (dc) {
+        try { dc.close(); } catch (_) {}
+      }
+      dc = null;
+      if (pc) {
+        pc.ontrack = null;
+        pc.onconnectionstatechange = null;
+        pc.oniceconnectionstatechange = null;
+        try { pc.close(); } catch (_) {}
+      }
+      pc = null;
+      ui.video.srcObject = null;
+      ui.video.muted = true;
+      ui.liveBadge.classList.remove('visible');
+      $('metricVideo').textContent = '未接收';
+      $('metricSize').textContent = '—';
+      $('metricData').textContent = '未连接';
+      clearCanvas();
+      setStatus('device', '等待连接', 'working');
+      setStatus('ice', '未建立');
+      setStatus('ai', '未连接');
+    }
+
+    function disconnect(reason = '用户主动断开') {
+      connectedIntent = false;
+      if (ws) {
+        ws.onclose = null;
+        try { ws.close(); } catch (_) {}
+      }
+      ws = null;
+      closePeer();
+      updateButton();
+      setStatus('ws', '未连接');
+      setGlobalState('尚未连接');
+      showEmpty('等待设备连接', '填写房间信息并点击“开始观看”，画面将在连接成功后自动显示。');
+      log('info', reason);
+    }
+
+    async function startPeer() {
+      if (offerStarted || !masterId || !ws || ws.readyState !== WebSocket.OPEN) return;
+      offerStarted = true;
+      setGlobalState('正在建立安全连接', 'working');
+      setStatus('device', '协商中', 'working');
+      log('info', '发现设备，开始 WebRTC 协商');
+
+      try {
+        pc = new RTCPeerConnection({ iceServers });
+        pc.onconnectionstatechange = () => {
+          if (!pc) return;
+          const state = pc.connectionState;
+          const tone = state === 'connected'
+            ? 'online'
+            : ['disconnected', 'failed', 'closed'].includes(state) ? 'error' : 'working';
+          setStatus('device', peerStateText[state] || '未知状态', tone);
+          log(state === 'connected' ? 'success' : 'info', 'PeerConnection：', state);
+          if (state === 'connected') {
+            setGlobalState('设备在线', 'online');
+            // Connection click counts as gesture — unmute to hear doorbell mic.
+            ui.video.muted = false;
+            ui.video.play().catch(() => {});
+          } else if (state === 'failed') {
+            setGlobalState('连接失败', 'error');
+            showEmpty('连接失败', '请检查设备在线状态、TURN 服务和当前网络，然后重新连接。');
+          }
+        };
+        pc.oniceconnectionstatechange = () => {
+          if (!pc) return;
+          const state = pc.iceConnectionState;
+          const tone = ['connected', 'completed'].includes(state)
+            ? 'online'
+            : ['disconnected', 'failed', 'closed'].includes(state) ? 'error' : 'working';
+          setStatus('ice', iceStateText[state] || '未知状态', tone);
+          log(tone === 'error' ? 'error' : 'info', 'ICE：', state);
+        };
+        pc.ontrack = (event) => {
+          let stream = ui.video.srcObject;
+          if (!(stream instanceof MediaStream)) {
+            stream = event.streams[0] || new MediaStream();
+            ui.video.srcObject = stream;
+          }
+          if (!stream.getTracks().includes(event.track)) {
+            stream.addTrack(event.track);
+          }
+          ui.video.play().catch((error) => log('warn', '浏览器阻止自动播放：', error));
+          if (event.track.kind === 'audio') {
+            log('success', '已接收音频轨道');
+          } else {
+            $('metricVideo').textContent = '接收中';
+            ui.empty.classList.add('hidden');
+            ui.liveBadge.classList.add('visible');
+            log('success', '已接收视频轨道');
+          }
+        };
+        pc.onicecandidate = (event) => {
+          if (!event.candidate || !ws || ws.readyState !== WebSocket.OPEN) return;
+          ws.send(JSON.stringify({
+            type: 'candidate',
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            to: masterId,
+          }));
+        };
+
+        dc = pc.createDataChannel('detect', { ordered: true });
+        dc.onopen = () => {
+          $('metricData').textContent = '已连接';
+          setStatus('ai', '等待数据', 'working');
+          log('success', 'AI 数据通道已连接');
+        };
+        dc.onclose = () => {
+          $('metricData').textContent = '已关闭';
+          setStatus('ai', '已断开');
+          log('warn', 'AI 数据通道已关闭');
+        };
+        dc.onerror = (event) => log('error', 'AI 数据通道异常：', event?.message || 'unknown');
+        dc.onmessage = (event) => {
+          try {
+            const text = typeof event.data === 'string'
+              ? event.data
+              : new TextDecoder().decode(event.data);
+            const message = JSON.parse(text);
+            drawBoxes(message);
+            setStatus('ai', '运行中', 'online');
+            if (!dc._loggedFirst) {
+              dc._loggedFirst = true;
+              log('success', '收到首帧检测结果');
+            }
+          } catch (error) {
+            log('error', '解析检测结果失败：', error);
+          }
+        };
+
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        const audioXcvr = pc.addTransceiver('audio', { direction: 'sendrecv' });
+        preferPcmu(audioXcvr);
+        audioSender = audioXcvr.sender;
+        // Placeholder muted track until user taps 对讲 (keeps m-line stable).
+        try {
+          const silence = await navigator.mediaDevices.getUserMedia({
+            audio: { channelCount: 1, echoCancellation: true },
+            video: false,
+          });
+          micStream = silence;
+          const track = silence.getAudioTracks()[0];
+          if (track) {
+            track.enabled = false;
+            await audioSender.replaceTrack(track);
+          }
+        } catch (error) {
+          log('warn', '预申请麦克风失败（可稍后点对讲重试）：', error);
+        }
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, to: masterId }));
+        ui.talk.disabled = false;
+        log('info', 'Offer 已发送，等待设备应答（含音频）');
+      } catch (error) {
+        offerStarted = false;
+        setGlobalState('协商失败', 'error');
+        log('error', '创建 WebRTC 连接失败：', error);
+      }
+    }
+
+    function connect() {
+      const url = ui.wsUrl.value.trim();
+      const room = ui.room.value.trim();
+      if (!url || !room) {
+        log('warn', '请填写信令服务器和设备房间');
+        return;
+      }
+
+      closePeer();
+      connectedIntent = true;
+      updateButton();
+      setGlobalState('正在连接信令服务', 'working');
+      setStatus('ws', '连接中', 'working');
+      showEmpty('正在连接', '正在连接信令服务并查找设备，请稍候。');
+      log('info', '连接房间：', room);
+
+      try {
+        ws = new WebSocket(url);
+      } catch (error) {
+        log('error', '无效的信令地址：', error);
+        disconnect('连接未建立');
+        return;
+      }
+
+      ws.onopen = () => {
+        setStatus('ws', '已连接', 'online');
+        setGlobalState('正在查找设备', 'working');
+        log('success', '信令服务已连接');
+        ws.send(JSON.stringify({ type: 'join', role: 'viewer', room }));
+      };
+
+      ws.onmessage = async (event) => {
+        let message;
+        try {
+          message = JSON.parse(event.data);
+        } catch (error) {
+          log('error', '收到无效信令消息：', error);
+          return;
+        }
+
+        if (message.type === 'joined') {
+          if (message.masterId) {
+            masterId = message.masterId;
+            await startPeer();
+          } else {
+            setStatus('device', '离线', 'error');
+            setGlobalState('设备离线', 'error');
+            showEmpty('设备暂未在线', '保持页面开启，设备上线后会自动开始连接。');
+            log('warn', '设备当前不在线，正在等待');
+          }
+          return;
+        }
+        if (message.type === 'peer-joined' && message.role === 'master') {
+          masterId = message.clientId;
+          log('success', '设备已上线');
+          await startPeer();
+          return;
+        }
+        if (message.type === 'peer-left' && message.role === 'master') {
+          closePeer();
+          setGlobalState('设备离线', 'error');
+          showEmpty('设备连接已断开', '设备离线或正在重启，页面会继续等待设备上线。');
+          log('warn', '设备已离线');
+          return;
+        }
+        if (message.type === 'answer' && pc) {
+          try {
+            await pc.setRemoteDescription({ type: 'answer', sdp: message.sdp });
+            log('success', '设备应答已生效');
+          } catch (error) {
+            log('error', '应用设备应答失败：', error);
+          }
+          return;
+        }
+        if (message.type === 'candidate' && pc && message.candidate) {
+          const candidate = {
+            candidate: message.candidate,
+            sdpMid: message.sdpMid || '0',
+            sdpMLineIndex: message.sdpMLineIndex ?? 0,
+          };
+          try {
+            await pc.addIceCandidate(candidate);
+          } catch (error) {
+            log('error', '添加 ICE Candidate 失败：', error);
+          }
+          return;
+        }
+        if (message.type === 'error') {
+          const detail = message.message || '信令服务返回错误';
+          setGlobalState('连接被拒绝', 'error');
+          showEmpty('无法加入设备房间', detail);
+          log('error', detail);
+        }
+      };
+
+      ws.onclose = () => {
+        if (!connectedIntent) return;
+        ws = null;
+        closePeer();
+        connectedIntent = false;
+        updateButton();
+        setStatus('ws', '已断开', 'error');
+        setGlobalState('信令连接已断开', 'error');
+        showEmpty('连接已断开', '请检查网络后重新点击“开始观看”。');
+        log('warn', '信令连接已关闭');
+      };
+      ws.onerror = () => {
+        setStatus('ws', '异常', 'error');
+        setGlobalState('信令连接异常', 'error');
+        log('error', '信令服务连接异常');
+      };
+    }
+
+    ui.video.addEventListener('loadedmetadata', () => {
+      const width = ui.video.videoWidth;
+      const height = ui.video.videoHeight;
+      if (width && height) {
+        ui.stage.style.aspectRatio = `${width} / ${height}`;
+        ui.canvas.width = width;
+        ui.canvas.height = height;
+        $('metricSize').textContent = `${width} × ${height}`;
+      }
+    });
+
+    ui.talk.addEventListener('click', () => {
+      enableTalk(!talkEnabled);
+    });
+
+    ui.go.addEventListener('click', () => {
+      if (connectedIntent) disconnect();
+      else connect();
+    });
+
+    $('fullscreen').addEventListener('click', () => {
+      const target = ui.stage;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen;
+      if (request) {
+        const result = request.call(target);
+        result?.catch?.((error) => log('warn', '无法进入全屏：', error));
+      }
+    });
+
+    $('clearLog').addEventListener('click', () => {
+      logRecords = [];
+      ui.log.textContent = '';
+    });
+
+    $('copyLog').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(logRecords.join('\n'));
+        log('success', '日志已复制');
+      } catch (error) {
+        log('warn', '复制失败：', error);
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      try { ws?.close(); } catch (_) {}
+      try { pc?.close(); } catch (_) {}
+    });
+
+    updateButton();
+    log('info', '页面已就绪');
+  </script>
+</body>
+</html>

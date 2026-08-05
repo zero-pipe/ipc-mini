@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.6.3)
+project(libmbedtls-download NONE)
+include(ExternalProject)
+if(NOT KVS_THIRDPARTY_ROOT)
+  message(FATAL_ERROR "KVS_THIRDPARTY_ROOT is required (sibling 3rdpart/ directory)")
+endif()
+if (BUILD_STATIC_LIBS)
+  set(BUILD_SHARED 0)
+else()
+  set(BUILD_SHARED 1)
+endif()
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_MACOSX_RPATH 1)
+else()
+  set(CMAKE_MACOSX_RPATH 0)
+endif()
+message(STATUS "Building mbedtls from ${KVS_THIRDPARTY_ROOT}/mbedtls-2.28.8")
+ExternalProject_Add(
+  project_libmbedtls
+  SOURCE_DIR      ${KVS_THIRDPARTY_ROOT}/mbedtls-2.28.8
+  BINARY_DIR      ${CMAKE_CURRENT_BINARY_DIR}/build/src
+  DOWNLOAD_COMMAND ""
+  UPDATE_COMMAND  ""
+  CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX=${OPEN_SRC_INSTALL_PREFIX}
+    -DUSE_SHARED_MBEDTLS_LIBRARY=${BUILD_SHARED}
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_MACOSX_RPATH=${CMAKE_MACOSX_RPATH}
+    -DENABLE_TESTING=OFF
+    -DENABLE_PROGRAMS=OFF
+    "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Wno-array-bounds"
+  BUILD_ALWAYS    TRUE
+  TEST_COMMAND    "")
