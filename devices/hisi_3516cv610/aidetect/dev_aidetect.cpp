@@ -6,22 +6,22 @@
 static td_char class_types[OT_AIDETECT_CLASS_BUTT][256] = {
     "face",/*人脸*/
     "human",/*人行*/
-    "vehicle",/*机动�?/
+    "vehicle",/*机动车*/
     "pet",/*宠物*/
-    "garbage",/*垃圾�?/
-    "bag",/*快递包�?/
+    "garbage",/*垃圾袋*/
+    "bag",/*快递包装*/
     "wallet",/*钱包*/
     "phone",/*手机*/
     "head_shoulder",/*头肩*/
-    "bicycle",/*自行�?/
-    "motorcycle",/*电瓶�?/
+    "bicycle",/*自行车*/
+    "motorcycle",/*电瓶车*/
 };
 
 static td_char g_track_status[OT_AIDETECT_TRACK_STATUS_BUTT][256] = {
-    "new",/*新目�?/
-    "update",/*已跟踪上的目标更新状�?/
-    "die",/*已跟踪上的目标丢�?/
-    "valid"/*未开启跟踪，返回的状�?/
+    "new",/*新目标*/
+    "update",/*已跟踪上的目标更新状态*/
+    "die",/*已跟踪上的目标丢失*/
+    "valid"/*未开启跟踪，返回的状态*/
 };
 
 namespace hisilicon{namespace dev{

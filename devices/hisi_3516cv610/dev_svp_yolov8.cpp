@@ -123,8 +123,10 @@ static std::vector<std::string> g_yolov8_class_str = {"person", "bicycle", "car"
         m_vpss_chn_attr.compress_mode             = OT_COMPRESS_MODE_NONE;
         m_vpss_chn_attr.aspect_ratio.mode         = OT_ASPECT_RATIO_NONE;
 
-        //3516cv610 svp_acl_mdl_execute()??640x640???????90ms(yolov8)??,????????0??        //new_rpn ???????3ms??????9-20??        //??????vi??x dst_frame_rate/src_frame_rate
-        //????????????????
+        // 3516CV610: svp_acl_mdl_execute() on 640x640 is ~90ms (yolov8),
+        // so inference FPS must stay low; new_rpn is ~3ms (about 9-20).
+        // Throttle via VI/VPSS: dst_frame_rate / src_frame_rate.
+        // Keep detection input rate reduced here.
         m_vpss_chn_attr.frame_rate.src_frame_rate = 3;
         m_vpss_chn_attr.frame_rate.dst_frame_rate = 2;
 
@@ -918,7 +920,7 @@ static std::vector<std::string> g_yolov8_class_str = {"person", "bicycle", "car"
                         svc_rect.rect_attr[i].width = rect_info.rect[i].point[SAMPLE_SVP_NPU_RECT_RIGHT_TOP].x - rect_info.rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].x;
                         svc_rect.rect_attr[i].height = rect_info.rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_BOTTOM].y - rect_info.rect[i].point[SAMPLE_SVP_NPU_RECT_LEFT_TOP].y;
                         //printf("x:%d,y:%d,w:%d,h:%d\n",svc_rect.rect_attr[i].x,svc_rect.rect_attr[i].y,svc_rect.rect_attr[i].width,svc_rect.rect_attr[i].height);
-                        //only support 0-15,svc_venc sample????0,?????????
+                        // only support 0-15; svc_venc sample uses type 0 for others unused
                         svc_rect.detect_type[i] = SVC_RECT_TYPE0;
                     }
                     svc_rect.pts = frame.video_frame.pts;
@@ -928,7 +930,7 @@ static std::vector<std::string> g_yolov8_class_str = {"person", "bicycle", "car"
                         DEV_WRITE_LOG_ERROR("ss_mpi_venc_send_svc_region failed with error 0x%x",ret);
                     }
 
-                    //????????svc_venc sample
+                    // follow svc_venc sample defaults
                     ot_venc_svc_param_ex svc_param;
                     memset(&svc_param,0,sizeof(svc_param));
                     svc_param.svc_version = OT_VENC_SVC_V2;

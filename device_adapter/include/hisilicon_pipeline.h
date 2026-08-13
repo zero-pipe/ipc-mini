@@ -22,7 +22,7 @@ class AiStreamBridge;
 struct HisiliconPipelineOptions {
     int32_t sys_flag{0};
     lane_divide_mode_t lane_mode{};
-    /** Sensor/VI capture size �?must match sensor mode (SC4336P: 2560x1440@30). */
+    /** Sensor/VI capture size — must match sensor mode (SC4336P: 2560x1440@30). */
     int32_t sensor_width{2560};
     int32_t sensor_height{1440};
     int32_t sensor_fps{30};

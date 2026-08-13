@@ -11,7 +11,7 @@ namespace zero_ipc::core {
 
 /**
  * Shared runtime injected into every protocol plugin (DIP / LoD).
- * Plugins talk to MediaSource + DetectionHub + poller_pool only � never HiSilicon SDK.
+ * Plugins talk to MediaSource + DetectionHub + poller_pool only — never HiSilicon SDK.
  */
 struct ProtocolContext {
     std::shared_ptr<media::MediaSource> media_source;
@@ -23,7 +23,7 @@ struct ProtocolContext {
 
 /**
  * Protocol plugin lifecycle contract.
- * OCP: add RTMP/GB28181/ONVIF by implementing this interface �?no Application edit.
+ * OCP: add RTMP/GB28181/ONVIF by implementing this interface — no Application edit.
  */
 class IProtocolPlugin {
 public:

@@ -44,7 +44,8 @@ namespace hisilicon{namespace dev{
 
         ot_venc_mod_param venc_mod_param;
 
-        //jpeg ??buf size??�?        memset(&venc_mod_param,0,sizeof(venc_mod_param));
+        // jpeg: enable mini buf size mode
+        memset(&venc_mod_param,0,sizeof(venc_mod_param));
         venc_mod_param.mod_type = OT_VENC_MOD_JPEG;
         ret = ss_mpi_venc_get_mod_param(&venc_mod_param);
         if(ret != TD_SUCCESS)
@@ -60,7 +61,8 @@ namespace hisilicon{namespace dev{
             return false;
         }
 
-        //h264 ??buf size??�?        memset(&venc_mod_param,0,sizeof(venc_mod_param));
+        // h264: enable mini buf size mode
+        memset(&venc_mod_param,0,sizeof(venc_mod_param));
         venc_mod_param.mod_type = OT_VENC_MOD_H264;
         ret = ss_mpi_venc_get_mod_param(&venc_mod_param);
         if(ret != TD_SUCCESS)
@@ -76,7 +78,8 @@ namespace hisilicon{namespace dev{
             return false;
         }
 
-        //h265 ??buf size??�?        memset(&venc_mod_param,0,sizeof(venc_mod_param));
+        // h265: enable mini buf size mode
+        memset(&venc_mod_param,0,sizeof(venc_mod_param));
         venc_mod_param.mod_type = OT_VENC_MOD_H265;
         ret = ss_mpi_venc_get_mod_param(&venc_mod_param);
         if(ret != TD_SUCCESS)

@@ -21,7 +21,7 @@ struct ApplicationOptions {
  * Composition root (CRP + LoD).
  * - Owns MediaSource and the shared protocol poller
  * - Depends on IDevicePipeline / IProtocolPlugin abstractions (DIP)
- * - New protocols: add_protocol() only �?Application internals stay closed (OCP)
+ * - New protocols: add_protocol() only — Application internals stay closed (OCP)
  */
 class Application final {
 public:

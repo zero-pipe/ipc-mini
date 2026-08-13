@@ -115,7 +115,7 @@ void EncodedStreamChannel::on_stream_come(zero_ipc::util::stream_obj_ptr sobj,
                                           zero_ipc::util::stream_head* head,
                                           const char* buf, int32_t len)
 {
-    /* HiSilicon venc callback stack is tiny ù?no printf/chrono/heavy work here. */
+    /* HiSilicon venc callback stack is tiny ‚Äî no printf/chrono/heavy work here. */
     if (!media_source_ || !sobj || !head) {
         return;
     }

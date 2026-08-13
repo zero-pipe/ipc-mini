@@ -230,7 +230,8 @@ bool FontRenderer::show_string_compare(const char* str_before,const char* str_no
     basic_char_t char_info;
 	for(uint32_t i = 0; i < wstr_cur.size(); i++)
 	{
-		//从i之坎的所有字符都覝修�?		if(wstr_cur[i] != wstr_before[i])
+		//从i之后的所有字符都要修改
+		if(wstr_cur[i] != wstr_before[i])
 		{
 			draw_char = true;
 		}

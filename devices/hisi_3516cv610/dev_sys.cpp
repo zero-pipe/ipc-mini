@@ -77,7 +77,7 @@ namespace hisilicon{namespace dev{
          * 1. cat /proc/umap/vb 
          * 2. 查看pool_type=common,owner=common,common说明这些vb快是通过ss_mpi_vb_set_cfg分配的
          * 3. 确保min_free为0 且 cat /dev/logmpp无获取不到vb报错信息
-         * 满足上诉说明设置的vb是最小化的，是最合理的，这样子能让出更多的MMZ内存给其他模块
+         * 满足上述说明设置的vb是最小化的，是最合理的，这样子能让出更多的MMZ内存给其他模块
          * */
 
         //raw

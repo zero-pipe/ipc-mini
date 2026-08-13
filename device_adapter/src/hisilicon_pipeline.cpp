@@ -143,7 +143,7 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
          */
         if (audio_codec == media::Codec::G711U) {
             std::fprintf(stderr,
-                         "[hisi] audio capture G711U on; speaker lazy-start\n");
+                         "[hisi] audio capture G711U on; speaker waits for talk\n");
         }
     }
 
