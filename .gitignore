@@ -14,7 +14,7 @@
 
 # Local tooling / publish helpers (do not commit)
 /scripts/
-/docs/
+#/docs/
 
 # Markdown: only root README
 *.md
