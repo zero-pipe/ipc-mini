@@ -17,7 +17,7 @@
 #/docs/
 
 # Markdown: only root README
-*.md
+#*.md
 !/README.md
 
 # Editor / OS
