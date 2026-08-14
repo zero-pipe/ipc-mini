@@ -10,14 +10,12 @@
       color-scheme: light;
       --bg: #eef5fc;
       --surface: #ffffff;
-      --surface-strong: #f5f9fe;
       --surface-soft: #eaf3fd;
       --line: #d9e6f3;
       --line-strong: #bfd3e8;
       --text: #17324d;
       --muted: #657d96;
       --primary: #2474e5;
-      --primary-hover: #1766d3;
       --success: #169b69;
       --warning: #d68a19;
       --danger: #df5262;
@@ -25,7 +23,6 @@
     }
 
     * { box-sizing: border-box; }
-
     html, body { min-height: 100%; }
 
     body {
@@ -42,70 +39,68 @@
     button, input { font: inherit; }
 
     button {
-      min-height: 44px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       transition: background .16s ease, border-color .16s ease, box-shadow .16s ease,
         color .16s ease, opacity .16s ease, transform .16s ease;
     }
 
-    button:disabled { cursor: not-allowed; opacity: .55; }
-    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    button:active:not(:disabled) { transform: scale(.96); }
     button:focus-visible, input:focus-visible {
       outline: 2px solid rgba(91, 155, 255, .9);
       outline-offset: 2px;
     }
 
     .app {
-      width: min(1320px, 100%);
+      width: min(1280px, 100%);
       margin: 0 auto;
-      padding: 24px clamp(16px, 3vw, 36px) 42px;
+      padding: 20px clamp(14px, 3vw, 32px) 36px;
     }
 
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 24px;
+      gap: 14px;
+      margin-bottom: 18px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
     }
 
     .brand-mark {
       display: grid;
       place-items: center;
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       flex: 0 0 auto;
       border: 1px solid #b9d2f2;
-      border-radius: 13px;
+      border-radius: 12px;
       background: linear-gradient(145deg, #e7f2ff, #f5f9ff);
       color: var(--primary);
       box-shadow: 0 5px 14px rgba(42, 108, 190, .1);
     }
 
-    .brand-mark svg { width: 24px; height: 24px; }
-    .brand h1 { margin: 0; font-size: 21px; letter-spacing: .01em; }
-    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .brand-mark svg { width: 22px; height: 22px; }
+    .brand h1 { margin: 0; font-size: 19px; letter-spacing: .01em; }
 
     .connection-state {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 38px;
-      padding: 0 14px;
+      min-height: 36px;
+      padding: 0 12px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 255, 255, .85);
+      background: rgba(255, 255, 255, .9);
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
       box-shadow: 0 4px 16px rgba(30, 77, 125, .06);
     }
@@ -139,8 +134,8 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 350px;
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 16px;
       align-items: start;
     }
 
@@ -158,9 +153,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      min-height: 56px;
-      padding: 10px 16px;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px 12px;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(180deg, #fbfdff, #f6faff);
     }
@@ -168,63 +163,107 @@
     .viewer-title {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
       min-width: 0;
-      font-size: 15px;
-      font-weight: 650;
+      color: var(--text);
+    }
+
+    .viewer-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--primary);
+      flex: 0 0 auto;
     }
 
     .live-badge {
       display: none;
-      padding: 4px 8px;
-      border-radius: 5px;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 999px;
       border: 1px solid #f4c5cb;
       background: #fff0f2;
       color: #cf3f50;
       font-size: 10px;
       font-weight: 750;
-      letter-spacing: .08em;
+      letter-spacing: .06em;
     }
 
     .live-badge.visible { display: inline-flex; }
 
-    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
-
-    .talk-button {
-      min-height: 34px;
-      padding: 0 14px;
-      border: 1px solid #c5d5e6;
-      border-radius: 10px;
-      background: #f4f8fc;
-      color: #2f4f6f;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
+    .live-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.2s infinite;
     }
-    .talk-button:hover { background: #eaf2fa; }
-    .talk-button.active {
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* Icon action buttons */
+    .icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid var(--line);
+      background: #f5f9fe;
+      color: #4f6d8b;
+      position: relative;
+    }
+
+    .icon-btn svg { width: 18px; height: 18px; }
+
+    .icon-btn:hover:not(:disabled) {
+      border-color: var(--line-strong);
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+
+    .icon-btn.active {
       border-color: #2f9e6b;
       background: #e8f8f0;
       color: #1f7a52;
     }
-    .talk-button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+
+    .icon-btn.danger-active {
+      border-color: #f2c4ca;
+      background: #fff0f2;
+      color: var(--danger);
     }
 
-    .ghost-button {
-      min-height: 34px;
-      padding: 0 12px;
-      border: 1px solid var(--line);
-      background: #f5f9fe;
-      color: #4f6d8b;
-      font-size: 12px;
+    .icon-btn[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      padding: 5px 8px;
+      border-radius: 8px;
+      background: #1c3349;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .14s ease, transform .14s ease;
+      z-index: 5;
     }
 
-    .ghost-button:hover {
-      border-color: var(--line-strong);
-      background: var(--surface-soft);
-      color: var(--text);
+    .icon-btn[data-tip]:hover::after,
+    .icon-btn[data-tip]:focus-visible::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     .stage {
@@ -254,7 +293,7 @@
       display: grid;
       place-content: center;
       justify-items: center;
-      gap: 12px;
+      gap: 10px;
       padding: 24px;
       text-align: center;
       pointer-events: none;
@@ -263,18 +302,16 @@
     .empty-state.hidden { display: none; }
 
     .empty-icon {
-      width: 52px;
-      height: 52px;
-      padding: 13px;
+      width: 48px;
+      height: 48px;
+      padding: 12px;
       border: 1px solid rgba(171, 203, 232, .3);
-      border-radius: 15px;
+      border-radius: 14px;
       color: #b9d7f1;
       background: rgba(42, 75, 106, .42);
-      box-shadow: 0 8px 24px rgba(5, 19, 32, .14);
     }
 
-    .empty-state strong { color: #edf6ff; font-size: 15px; }
-    .empty-state span { max-width: 320px; color: #adc2d6; font-size: 12px; line-height: 1.6; }
+    .empty-state strong { color: #edf6ff; font-size: 14px; font-weight: 650; }
 
     .metrics {
       display: grid;
@@ -283,98 +320,71 @@
     }
 
     .metric {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       min-width: 0;
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-right: 1px solid var(--line);
       background: #f8fbff;
     }
 
     .metric:last-child { border-right: 0; }
-    .metric-label { display: block; color: var(--muted); font-size: 12px; }
+
+    .metric-icon {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      border: 1px solid #dce8f4;
+      border-radius: 9px;
+      background: #fff;
+      color: #6f88a3;
+    }
+
+    .metric-icon svg { width: 15px; height: 15px; }
+
     .metric-value {
       display: block;
-      margin-top: 6px;
       overflow: hidden;
       text-overflow: ellipsis;
       color: #234765;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 650;
       white-space: nowrap;
     }
 
     .sidebar { display: grid; height: 100%; }
-    .panel { padding: 20px; }
-    .panel h2 {
-      margin: 0 0 18px;
-      font-size: 16px;
-      letter-spacing: .01em;
-    }
-
+    .panel { padding: 16px; }
     .connection-panel {
       display: flex;
       height: 100%;
       flex-direction: column;
     }
 
-    .device-overview {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 18px;
-      padding: 13px;
-      border: 1px solid #e0ebf6;
-      border-radius: 12px;
-      background: #f7faff;
+    .panel-label {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
-    .device-avatar {
-      display: grid;
-      place-items: center;
-      width: 40px;
-      height: 40px;
-      flex: 0 0 auto;
-      border: 1px solid #c9ddf2;
-      border-radius: 11px;
-      background: #eaf4ff;
-      color: var(--primary);
-    }
-
-    .device-avatar svg { width: 21px; height: 21px; }
-    .device-overview strong { display: block; color: var(--text); font-size: 14px; }
-    .device-overview span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
-
-    .panel-divider {
-      height: 1px;
-      margin: 19px 0 17px;
-      background: var(--line);
-    }
-
-    .section-title {
-      margin: 0 0 9px;
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    .field { margin-bottom: 15px; }
-    .field label {
-      display: block;
-      margin-bottom: 8px;
-      color: #536f8b;
-      font-size: 12px;
-      font-weight: 550;
-    }
+    .field { margin-bottom: 12px; }
+    .field[hidden] { display: none !important; }
 
     .field input {
       width: 100%;
-      min-height: 46px;
-      padding: 0 13px;
+      min-height: 42px;
+      padding: 0 12px;
       border: 1px solid var(--line);
       border-radius: 10px;
       outline: none;
       background: #f8fbff;
       color: var(--text);
-      font-size: 14px;
-      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+      font-size: 13px;
     }
 
     .field input:focus {
@@ -383,167 +393,179 @@
       background: #ffffff;
     }
 
-    .primary-button {
-      width: 100%;
+    /* Primary connect / disconnect as large icon tile */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .tile-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 88px;
+      padding: 12px;
+      border: 1px solid transparent;
       background: linear-gradient(180deg, #3383ef, #216fdc);
-      color: white;
-      font-weight: 700;
+      color: #fff;
       box-shadow: 0 8px 20px rgba(29, 102, 214, .2), inset 0 1px 0 rgba(255, 255, 255, .18);
     }
 
-    .primary-button:hover {
-      background: linear-gradient(180deg, #2879e8, #1764cc);
-      box-shadow: 0 10px 24px rgba(29, 102, 214, .26), inset 0 1px 0 rgba(255, 255, 255, .18);
+    .tile-btn svg { width: 26px; height: 26px; }
+    .tile-btn span {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
     }
-    .primary-button.disconnect {
-      border: 1px solid rgba(240, 113, 126, .26);
+
+    .tile-btn:hover {
+      background: linear-gradient(180deg, #2879e8, #1764cc);
+    }
+
+    .tile-btn.disconnect {
+      border-color: rgba(240, 113, 126, .26);
       background: #fff2f4;
       color: #ce4051;
       box-shadow: none;
     }
-    .primary-button.disconnect:hover { background: #ffe8ec; }
 
-    .helper {
-      margin: 13px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
+    .tile-btn.disconnect:hover { background: #ffe8ec; }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
-    .status-list { display: grid; }
-
-    .status-row {
+    .quick-btn {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      min-height: 40px;
-      border-bottom: 1px solid #edf3f9;
-      color: var(--muted);
-      font-size: 13px;
+      justify-content: center;
+      gap: 5px;
+      min-height: 72px;
+      padding: 8px 4px;
+      border: 1px solid var(--line);
+      background: #f7faff;
+      color: #3f5d7a;
     }
 
-    .status-row:last-child { border-bottom: 0; }
-
-    .status-value {
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      flex: 0 0 auto;
-      border: 1px solid #d7e2ec;
-      border-radius: 9px;
-      background: #f1f5f9;
-      color: #8b9caf;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
-      transition: color .18s ease, border-color .18s ease, background .18s ease,
-        box-shadow .18s ease;
+    .quick-btn svg { width: 20px; height: 20px; }
+    .quick-btn span {
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1.2;
     }
 
-    .status-value::before {
-      content: "—";
-      font-size: 14px;
-      font-weight: 800;
-      line-height: 1;
+    .quick-btn:hover:not(:disabled) {
+      border-color: var(--line-strong);
+      background: var(--surface-soft);
+      color: var(--text);
     }
 
-    .status-value b {
-      position: absolute;
-      width: 1px;
+    .quick-btn.active {
+      border-color: #2f9e6b;
+      background: #e8f8f0;
+      color: #1f7a52;
+    }
+
+    .panel-divider {
       height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
+      margin: 4px 0 14px;
+      background: var(--line);
     }
 
-    .status-value .mini-dot { display: none; }
-
-    .status-row[data-tone="online"] .status-value {
-      border-color: #169b69;
-      background: #20aa78;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(22, 155, 105, .2);
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
     }
 
-    .status-row[data-tone="online"] .status-value::before { content: "✓"; }
-
-    .status-row[data-tone="working"] .status-value {
-      border-color: #dc921f;
-      background: #e9a23b;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(214, 138, 25, .18);
-    }
-
-    .status-row[data-tone="working"] .status-value::before {
-      content: "···";
-      padding-bottom: 5px;
-      letter-spacing: -1px;
-    }
-
-    .status-row[data-tone="error"] .status-value {
-      border-color: #d94a5a;
-      background: #e35d6a;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(223, 82, 98, .18);
-    }
-
-    .status-row[data-tone="error"] .status-value::before { content: "×"; }
-
-    .status-name {
-      display: inline-flex;
+    .status-tile {
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
+      padding: 12px 8px;
+      border: 1px solid #e4eef7;
+      border-radius: 12px;
+      background: #f8fbff;
+      text-align: center;
+      transition: border-color .18s ease, background .18s ease;
     }
 
-    .status-icon {
+    .status-glyph {
+      position: relative;
       display: grid;
       place-items: center;
-      width: 30px;
-      height: 30px;
-      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
       border: 1px solid #dce8f4;
-      border-radius: 9px;
-      background: #f4f8fc;
-      color: #7790aa;
+      border-radius: 12px;
+      background: #fff;
+      color: #7a91a9;
       transition: color .18s ease, border-color .18s ease, background .18s ease;
     }
 
-    .status-icon svg {
-      width: 16px;
-      height: 16px;
-    }
+    .status-glyph svg { width: 18px; height: 18px; }
 
-    .status-row[data-tone="online"] .status-icon {
-      border-color: #bce6d6;
-      background: #ecf9f4;
-      color: var(--success);
-    }
-
-    .status-row[data-tone="working"] .status-icon {
-      border-color: #f1d9af;
-      background: #fff8e9;
-      color: var(--warning);
-    }
-
-    .status-row[data-tone="error"] .status-icon {
-      border-color: #f2c4ca;
-      background: #fff0f2;
-      color: var(--danger);
-    }
-
-    .mini-dot {
-      width: 7px;
-      height: 7px;
+    .status-mark {
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #f8fbff;
       border-radius: 50%;
       background: #9bacc0;
     }
 
-    .mini-dot.online { background: var(--success); }
-    .mini-dot.working { background: var(--warning); }
-    .mini-dot.error { background: var(--danger); }
+    .status-tile b {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .status-tile[data-tone="online"] {
+      border-color: #c5eadb;
+      background: #f1faf6;
+    }
+    .status-tile[data-tone="online"] .status-glyph {
+      border-color: #bce6d6;
+      background: #ecf9f4;
+      color: var(--success);
+    }
+    .status-tile[data-tone="online"] .status-mark { background: var(--success); }
+
+    .status-tile[data-tone="working"] {
+      border-color: #f1d9af;
+      background: #fffaf0;
+    }
+    .status-tile[data-tone="working"] .status-glyph {
+      border-color: #f1d9af;
+      background: #fff8e9;
+      color: var(--warning);
+    }
+    .status-tile[data-tone="working"] .status-mark {
+      background: var(--warning);
+      animation: pulse 1.2s infinite;
+    }
+
+    .status-tile[data-tone="error"] {
+      border-color: #f2c4ca;
+      background: #fff5f6;
+    }
+    .status-tile[data-tone="error"] .status-glyph {
+      border-color: #f2c4ca;
+      background: #fff0f2;
+      color: var(--danger);
+    }
+    .status-tile[data-tone="error"] .status-mark { background: var(--danger); }
 
     .log-card { grid-column: 1 / -1; }
 
@@ -551,18 +573,32 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-height: 50px;
-      padding: 0 16px;
+      min-height: 48px;
+      padding: 0 12px 0 16px;
       border-bottom: 1px solid var(--line);
       background: #f7faff;
     }
 
-    .log-header h2 { margin: 0; font-size: 15px; }
+    .log-header h2 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .log-header h2 svg {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+    }
+
+    .log-actions { display: flex; gap: 6px; }
 
     #log {
-      height: 184px;
+      height: 160px;
       overflow: auto;
-      padding: 12px 16px 15px;
+      padding: 10px 14px 12px;
       background: #f9fbfe;
       font: 12px/1.75 ui-monospace, SFMono-Regular, Consolas, monospace;
     }
@@ -571,7 +607,7 @@
       display: grid;
       grid-template-columns: 72px 58px minmax(0, 1fr);
       gap: 8px;
-      padding: 3px 0;
+      padding: 2px 0;
       color: #3d5874;
     }
 
@@ -598,25 +634,22 @@
 
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
-      .sidebar { grid-template-columns: 1fr; }
       .log-card { grid-column: 1; }
       .connection-panel { height: auto; }
     }
 
     @media (max-width: 620px) {
-      .app { padding-top: 14px; }
-      .topbar { align-items: flex-start; margin-bottom: 15px; }
-      .brand p { display: none; }
-      .connection-state { min-height: 32px; padding: 0 10px; font-size: 11px; }
-      .sidebar { grid-template-columns: 1fr; gap: 12px; }
+      .app { padding-top: 12px; }
+      .topbar { margin-bottom: 12px; }
+      .connection-state span:not(.state-dot) { max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
       .layout { gap: 12px; }
-      .viewer-toolbar { min-height: 48px; }
-      .panel { padding: 17px; }
       .metrics { grid-template-columns: repeat(2, 1fr); }
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .quick-grid { grid-template-columns: repeat(3, 1fr); }
       .log-line { grid-template-columns: 64px 50px minmax(0, 1fr); gap: 5px; }
-      #log { height: 160px; padding-inline: 11px; font-size: 11px; }
+      #log { height: 140px; font-size: 11px; }
+      .icon-btn[data-tip]::after { display: none; }
     }
   </style>
 </head>
@@ -630,14 +663,11 @@
             <circle cx="12" cy="13" r="3" />
           </svg>
         </div>
-        <div>
-          <h1>Zero Mini</h1>
-          <p>实时画面与智能目标检测</p>
-        </div>
+        <h1>Zero Mini</h1>
       </div>
-      <div id="globalState" class="connection-state" data-tone="idle">
+      <div id="globalState" class="connection-state" data-tone="idle" title="连接状态">
         <span class="state-dot"></span>
-        <span id="globalStateText">尚未连接</span>
+        <span id="globalStateText">未连接</span>
       </div>
     </header>
 
@@ -645,12 +675,24 @@
       <article class="card viewer-card">
         <div class="viewer-toolbar">
           <div class="viewer-title">
-            <span>实时画面</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="3.5" y="6" width="13.5" height="12" rx="2.5" />
+              <path d="m17 10 3.5-2v8L17 14z" />
+            </svg>
             <span id="liveBadge" class="live-badge">LIVE</span>
           </div>
           <div class="toolbar-actions">
-            <button id="talk" class="talk-button" type="button" disabled>开始对讲</button>
-            <button id="fullscreen" class="ghost-button" type="button">全屏查看</button>
+            <button id="talk" class="icon-btn" type="button" disabled data-tip="对讲" aria-label="对讲" title="对讲">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M12 3a3.5 3.5 0 0 0-3.5 3.5v5a3.5 3.5 0 1 0 7 0v-5A3.5 3.5 0 0 0 12 3Z" />
+                <path d="M6.5 12.5a5.5 5.5 0 0 0 11 0M12 18v3" />
+              </svg>
+            </button>
+            <button id="fullscreen" class="icon-btn" type="button" data-tip="全屏" aria-label="全屏" title="全屏">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -662,26 +704,45 @@
               <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5z" />
               <path d="m16 10 4-2v8l-4-2z" />
             </svg>
-            <strong id="emptyTitle">等待设备连接</strong>
-            <span id="emptyHint">填写房间信息并点击“开始观看”，画面将在连接成功后自动显示。</span>
+            <strong id="emptyTitle">等待连接</strong>
           </div>
         </div>
 
         <div class="metrics">
-          <div class="metric">
-            <span class="metric-label">视频状态</span>
+          <div class="metric" title="视频状态">
+            <i class="metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3.5" y="6" width="13.5" height="12" rx="2.5" />
+                <path d="m17 10 3.5-2v8L17 14z" />
+              </svg>
+            </i>
             <span id="metricVideo" class="metric-value">未接收</span>
           </div>
-          <div class="metric">
-            <span class="metric-label">画面尺寸</span>
+          <div class="metric" title="画面尺寸">
+            <i class="metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M8 19v2M16 19v2M3 10h18" />
+              </svg>
+            </i>
             <span id="metricSize" class="metric-value">—</span>
           </div>
-          <div class="metric">
-            <span class="metric-label">检测目标</span>
+          <div class="metric" title="检测目标">
+            <i class="metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+              </svg>
+            </i>
             <span id="metricObjects" class="metric-value">0</span>
           </div>
-          <div class="metric">
-            <span class="metric-label">数据通道</span>
+          <div class="metric" title="数据通道">
+            <i class="metric-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M7 8h10M7 12h7M7 16h10" />
+                <rect x="4" y="4" width="16" height="16" rx="3" />
+              </svg>
+            </i>
             <span id="metricData" class="metric-value">未连接</span>
           </div>
         </div>
@@ -689,82 +750,94 @@
 
       <aside class="sidebar">
         <section class="card panel connection-panel">
-          <h2>设备连接</h2>
-          <div class="device-overview">
-            <i class="device-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
-                <rect x="3.5" y="6" width="13.5" height="12" rx="2.5" />
-                <path d="m17 10 3.5-2v8L17 14z" />
-                <circle cx="10.2" cy="12" r="2.7" />
+          <p class="panel-label">控制</p>
+          <div class="action-grid">
+            <button id="go" class="tile-btn" type="button" aria-label="开始观看">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.5" />
+                <path d="m10 8.8 6 3.2-6 3.2z" fill="currentColor" stroke="none" />
               </svg>
-            </i>
-            <div>
-              <strong>Zero Mini 智能摄像机</strong>
-              <span>实时视频与 AI 目标检测</span>
-            </div>
+              <span id="goLabel">观看</span>
+            </button>
           </div>
+
+          <div class="quick-grid">
+            <button id="talkSide" class="quick-btn" type="button" disabled aria-label="对讲">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M12 3a3.5 3.5 0 0 0-3.5 3.5v5a3.5 3.5 0 1 0 7 0v-5A3.5 3.5 0 0 0 12 3Z" />
+                <path d="M6.5 12.5a5.5 5.5 0 0 0 11 0M12 18v3" />
+              </svg>
+              <span>对讲</span>
+            </button>
+            <button id="fullscreenSide" class="quick-btn" type="button" aria-label="全屏">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4" />
+              </svg>
+              <span>全屏</span>
+            </button>
+            <button id="muteSide" class="quick-btn" type="button" aria-label="静音" title="静音远端声音">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 10v4h3.2L12 18V6L7.2 10H4Z" />
+                <path d="m16 10 4 4M20 10l-4 4" />
+              </svg>
+              <span>静音</span>
+            </button>
+          </div>
+
           <div class="field" hidden>
-            <label for="room">设备房间</label>
             <input id="room" value="door-1" autocomplete="off" spellcheck="false" />
           </div>
           <div class="field" hidden>
-            <label for="wsUrl">信令服务器</label>
             <input id="wsUrl" value="ws://114.55.94.148:8089/ws" inputmode="url" autocomplete="url" spellcheck="false" />
           </div>
-          <button id="go" class="primary-button" type="button">开始观看</button>
-          <p class="helper">最多支持 3 位家庭成员同时观看。移动网络下可能通过 TURN 中继连接。</p>
 
           <div class="panel-divider"></div>
-          <h3 class="section-title">连接状态</h3>
-          <div class="status-list">
-            <div id="wsRow" class="status-row" data-tone="idle">
-              <span class="status-name">
-                <i class="status-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M5 16.5a10 10 0 0 1 14 0M8 13a6 6 0 0 1 8 0M11 9.8a2 2 0 0 1 2 0" />
-                    <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
-                  </svg>
-                </i>
-                <span>信令服务</span>
-              </span>
-              <span class="status-value" title="未连接" aria-label="未连接"><i id="wsDot" class="mini-dot"></i><b id="wsState">未连接</b></span>
+          <p class="panel-label">状态</p>
+          <div class="status-grid">
+            <div id="wsRow" class="status-tile" data-tone="idle" title="信令未连接">
+              <i class="status-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M5 16.5a10 10 0 0 1 14 0M8 13a6 6 0 0 1 8 0M11 9.8a2 2 0 0 1 2 0" />
+                  <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+                </svg>
+                <i id="wsDot" class="status-mark"></i>
+              </i>
+              <b>信令</b>
+              <span id="wsState" class="visually-hidden">未连接</span>
             </div>
-            <div id="deviceRow" class="status-row" data-tone="working">
-              <span class="status-name">
-                <i class="status-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <rect x="4" y="6" width="13" height="12" rx="2.5" />
-                    <path d="m17 10 3-2v8l-3-2z" />
-                    <circle cx="10.5" cy="12" r="2.5" />
-                  </svg>
-                </i>
-                <span>设备状态</span>
-              </span>
-              <span class="status-value" title="等待连接" aria-label="等待连接"><i id="deviceDot" class="mini-dot"></i><b id="deviceState">等待连接</b></span>
+            <div id="deviceRow" class="status-tile" data-tone="working" title="设备等待连接">
+              <i class="status-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="4" y="6" width="13" height="12" rx="2.5" />
+                  <path d="m17 10 3-2v8l-3-2z" />
+                  <circle cx="10.5" cy="12" r="2.5" />
+                </svg>
+                <i id="deviceDot" class="status-mark"></i>
+              </i>
+              <b>设备</b>
+              <span id="deviceState" class="visually-hidden">等待连接</span>
             </div>
-            <div id="iceRow" class="status-row" data-tone="idle">
-              <span class="status-name">
-                <i class="status-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <circle cx="12" cy="12" r="8.5" />
-                    <path d="M3.8 12h16.4M12 3.5c2.2 2.3 3.2 5.1 3.2 8.5s-1 6.2-3.2 8.5C9.8 18.2 8.8 15.4 8.8 12S9.8 5.8 12 3.5Z" />
-                  </svg>
-                </i>
-                <span>ICE 网络</span>
-              </span>
-              <span class="status-value" title="未建立" aria-label="未建立"><i id="iceDot" class="mini-dot"></i><b id="iceState">未建立</b></span>
+            <div id="iceRow" class="status-tile" data-tone="idle" title="ICE 未建立">
+              <i class="status-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path d="M3.8 12h16.4M12 3.5c2.2 2.3 3.2 5.1 3.2 8.5s-1 6.2-3.2 8.5C9.8 18.2 8.8 15.4 8.8 12S9.8 5.8 12 3.5Z" />
+                </svg>
+                <i id="iceDot" class="status-mark"></i>
+              </i>
+              <b>网络</b>
+              <span id="iceState" class="visually-hidden">未建立</span>
             </div>
-            <div id="aiRow" class="status-row" data-tone="idle">
-              <span class="status-name">
-                <i class="status-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <rect x="5" y="5" width="14" height="14" rx="3" />
-                    <path d="M9 9v6M9 12h3M15 9v6M3 9h2M3 15h2M19 9h2M19 15h2M9 3v2M15 3v2M9 19v2M15 19v2" />
-                  </svg>
-                </i>
-                <span>AI 检测</span>
-              </span>
-              <span class="status-value" title="未连接" aria-label="未连接"><i id="aiDot" class="mini-dot"></i><b id="aiState">未连接</b></span>
+            <div id="aiRow" class="status-tile" data-tone="idle" title="AI 未连接">
+              <i class="status-glyph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="5" y="5" width="14" height="14" rx="3" />
+                  <path d="M9 9v6M9 12h3M15 9v6M3 9h2M3 15h2M19 9h2M19 15h2M9 3v2M15 3v2M9 19v2M15 19v2" />
+                </svg>
+                <i id="aiDot" class="status-mark"></i>
+              </i>
+              <b>AI</b>
+              <span id="aiState" class="visually-hidden">未连接</span>
             </div>
           </div>
         </section>
@@ -772,10 +845,25 @@
 
       <section class="card log-card">
         <div class="log-header">
-          <h2>连接日志</h2>
-          <div>
-            <button id="copyLog" class="ghost-button" type="button">复制</button>
-            <button id="clearLog" class="ghost-button" type="button">清空</button>
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M7 7h10M7 12h7M7 17h10" />
+              <rect x="4" y="4" width="16" height="16" rx="3" />
+            </svg>
+            日志
+          </h2>
+          <div class="log-actions">
+            <button id="copyLog" class="icon-btn" type="button" data-tip="复制" aria-label="复制日志" title="复制">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="8" y="8" width="11" height="11" rx="2" />
+                <path d="M5 14V6a2 2 0 0 1 2-2h8" />
+              </svg>
+            </button>
+            <button id="clearLog" class="icon-btn" type="button" data-tip="清空" aria-label="清空日志" title="清空">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M5 7h14M9 7V5h6v2M8 7l1 12h6l1-12" />
+              </svg>
+            </button>
           </div>
         </div>
         <div id="log" role="log" aria-live="polite"></div>
@@ -783,10 +871,25 @@
     </section>
   </main>
 
+  <style>
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+
   <script>
     const $ = (id) => document.getElementById(id);
     const ui = {
       go: $('go'),
+      goLabel: $('goLabel'),
       room: $('room'),
       wsUrl: $('wsUrl'),
       video: $('v'),
@@ -794,12 +897,13 @@
       stage: $('stage'),
       empty: $('emptyState'),
       emptyTitle: $('emptyTitle'),
-      emptyHint: $('emptyHint'),
       globalState: $('globalState'),
       globalStateText: $('globalStateText'),
       liveBadge: $('liveBadge'),
       log: $('log'),
       talk: $('talk'),
+      talkSide: $('talkSide'),
+      muteSide: $('muteSide'),
     };
 
     const iceServers = [
@@ -814,6 +918,7 @@
     let pc = null;
     let micStream = null;
     let talkEnabled = false;
+    let audioMuted = false;
     let audioSender = null;
     let ws = null;
     let masterId = null;
@@ -852,15 +957,14 @@
     function setGlobalState(text, tone = 'idle') {
       ui.globalState.dataset.tone = tone;
       ui.globalStateText.textContent = text;
+      ui.globalState.title = text;
     }
 
     function setStatus(name, text, tone = '') {
       $(`${name}State`).textContent = text;
-      $(`${name}Dot`).className = `mini-dot ${tone}`;
+      $(`${name}Dot`).className = `status-mark ${tone}`;
       $(`${name}Row`).dataset.tone = tone || 'idle';
-      const indicator = $(`${name}State`).parentElement;
-      indicator.title = text;
-      indicator.setAttribute('aria-label', text);
+      $(`${name}Row`).title = text;
     }
 
     const peerStateText = {
@@ -882,15 +986,19 @@
       closed: '已关闭',
     };
 
-    function showEmpty(title, hint) {
+    function showEmpty(title) {
       ui.emptyTitle.textContent = title;
-      ui.emptyHint.textContent = hint;
       ui.empty.classList.remove('hidden');
     }
 
     function updateButton() {
-      ui.go.textContent = connectedIntent ? '断开连接' : '开始观看';
+      ui.goLabel.textContent = connectedIntent ? '断开' : '观看';
       ui.go.classList.toggle('disconnect', connectedIntent);
+      ui.go.setAttribute('aria-label', connectedIntent ? '断开连接' : '开始观看');
+      ui.go.innerHTML = connectedIntent
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 8l8 8M16 8l-8 8"/><circle cx="12" cy="12" r="8.5"/></svg><span id="goLabel">断开</span>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m10 8.8 6 3.2-6 3.2z" fill="currentColor" stroke="none"/></svg><span id="goLabel">观看</span>`;
+      ui.goLabel = $('goLabel');
       ui.room.disabled = connectedIntent;
       ui.wsUrl.disabled = connectedIntent;
     }
@@ -951,7 +1059,18 @@
     function setTalkUi(enabled) {
       talkEnabled = enabled;
       ui.talk.classList.toggle('active', enabled);
-      ui.talk.textContent = enabled ? '结束对讲' : '开始对讲';
+      ui.talkSide.classList.toggle('active', enabled);
+      ui.talk.setAttribute('aria-label', enabled ? '结束对讲' : '对讲');
+      ui.talk.dataset.tip = enabled ? '结束对讲' : '对讲';
+      ui.talk.title = enabled ? '结束对讲' : '对讲';
+      ui.talkSide.setAttribute('aria-label', enabled ? '结束对讲' : '对讲');
+    }
+
+    function setMuteUi(muted) {
+      audioMuted = muted;
+      ui.muteSide.classList.toggle('active', muted);
+      ui.muteSide.setAttribute('aria-label', muted ? '取消静音' : '静音');
+      ui.video.muted = muted;
     }
 
     async function enableTalk(enable) {
@@ -963,7 +1082,7 @@
         const track = audioSender.track;
         if (track) track.enabled = false;
         setTalkUi(false);
-        log('info', '对讲已关闭（本地静音）');
+        log('info', '对讲已关闭');
         return;
       }
       try {
@@ -983,13 +1102,21 @@
         micTrack.enabled = true;
         await audioSender.replaceTrack(micTrack);
         setTalkUi(true);
-        // User gesture: allow remote audio through the video element.
-        ui.video.muted = false;
+        setMuteUi(false);
         await ui.video.play().catch(() => {});
-        log('success', '对讲已开启（G711U/PCMU）');
+        log('success', '对讲已开启');
       } catch (error) {
         setTalkUi(false);
         log('error', '打开麦克风失败：', error);
+      }
+    }
+
+    function requestFullscreen() {
+      const target = ui.stage;
+      const request = target.requestFullscreen || target.webkitRequestFullscreen;
+      if (request) {
+        const result = request.call(target);
+        result?.catch?.((error) => log('warn', '无法进入全屏：', error));
       }
     }
 
@@ -998,6 +1125,7 @@
       masterId = null;
       setTalkUi(false);
       ui.talk.disabled = true;
+      ui.talkSide.disabled = true;
       audioSender = null;
       if (micStream) {
         micStream.getTracks().forEach((track) => track.stop());
@@ -1015,7 +1143,7 @@
       }
       pc = null;
       ui.video.srcObject = null;
-      ui.video.muted = true;
+      setMuteUi(false);
       ui.liveBadge.classList.remove('visible');
       $('metricVideo').textContent = '未接收';
       $('metricSize').textContent = '—';
@@ -1036,15 +1164,15 @@
       closePeer();
       updateButton();
       setStatus('ws', '未连接');
-      setGlobalState('尚未连接');
-      showEmpty('等待设备连接', '填写房间信息并点击“开始观看”，画面将在连接成功后自动显示。');
+      setGlobalState('未连接');
+      showEmpty('等待连接');
       log('info', reason);
     }
 
     async function startPeer() {
       if (offerStarted || !masterId || !ws || ws.readyState !== WebSocket.OPEN) return;
       offerStarted = true;
-      setGlobalState('正在建立安全连接', 'working');
+      setGlobalState('连接中', 'working');
       setStatus('device', '协商中', 'working');
       log('info', '发现设备，开始 WebRTC 协商');
 
@@ -1059,13 +1187,14 @@
           setStatus('device', peerStateText[state] || '未知状态', tone);
           log(state === 'connected' ? 'success' : 'info', 'PeerConnection：', state);
           if (state === 'connected') {
-            setGlobalState('设备在线', 'online');
-            // Connection click counts as gesture — unmute to hear doorbell mic.
-            ui.video.muted = false;
-            ui.video.play().catch(() => {});
+            setGlobalState('在线', 'online');
+            if (!audioMuted) {
+              ui.video.muted = false;
+              ui.video.play().catch(() => {});
+            }
           } else if (state === 'failed') {
-            setGlobalState('连接失败', 'error');
-            showEmpty('连接失败', '请检查设备在线状态、TURN 服务和当前网络，然后重新连接。');
+            setGlobalState('失败', 'error');
+            showEmpty('连接失败');
           }
         };
         pc.oniceconnectionstatechange = () => {
@@ -1140,7 +1269,6 @@
         const audioXcvr = pc.addTransceiver('audio', { direction: 'sendrecv' });
         preferPcmu(audioXcvr);
         audioSender = audioXcvr.sender;
-        // Placeholder muted track until user taps 对讲 (keeps m-line stable).
         try {
           const silence = await navigator.mediaDevices.getUserMedia({
             audio: { channelCount: 1, echoCancellation: true },
@@ -1153,14 +1281,15 @@
             await audioSender.replaceTrack(track);
           }
         } catch (error) {
-          log('warn', '预申请麦克风失败（可稍后点对讲重试）：', error);
+          log('warn', '预申请麦克风失败：', error);
         }
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp, to: masterId }));
         ui.talk.disabled = false;
-        log('info', 'Offer 已发送，等待设备应答（含音频）');
+        ui.talkSide.disabled = false;
+        log('info', 'Offer 已发送，等待设备应答');
       } catch (error) {
         offerStarted = false;
         setGlobalState('协商失败', 'error');
@@ -1179,9 +1308,9 @@
       closePeer();
       connectedIntent = true;
       updateButton();
-      setGlobalState('正在连接信令服务', 'working');
+      setGlobalState('连接中', 'working');
       setStatus('ws', '连接中', 'working');
-      showEmpty('正在连接', '正在连接信令服务并查找设备，请稍候。');
+      showEmpty('连接中…');
       log('info', '连接房间：', room);
 
       try {
@@ -1194,7 +1323,7 @@
 
       ws.onopen = () => {
         setStatus('ws', '已连接', 'online');
-        setGlobalState('正在查找设备', 'working');
+        setGlobalState('查找设备', 'working');
         log('success', '信令服务已连接');
         ws.send(JSON.stringify({ type: 'join', role: 'viewer', room }));
       };
@@ -1215,7 +1344,7 @@
           } else {
             setStatus('device', '离线', 'error');
             setGlobalState('设备离线', 'error');
-            showEmpty('设备暂未在线', '保持页面开启，设备上线后会自动开始连接。');
+            showEmpty('设备离线');
             log('warn', '设备当前不在线，正在等待');
           }
           return;
@@ -1229,7 +1358,7 @@
         if (message.type === 'peer-left' && message.role === 'master') {
           closePeer();
           setGlobalState('设备离线', 'error');
-          showEmpty('设备连接已断开', '设备离线或正在重启，页面会继续等待设备上线。');
+          showEmpty('设备已断开');
           log('warn', '设备已离线');
           return;
         }
@@ -1257,8 +1386,8 @@
         }
         if (message.type === 'error') {
           const detail = message.message || '信令服务返回错误';
-          setGlobalState('连接被拒绝', 'error');
-          showEmpty('无法加入设备房间', detail);
+          setGlobalState('被拒绝', 'error');
+          showEmpty('无法加入');
           log('error', detail);
         }
       };
@@ -1270,13 +1399,13 @@
         connectedIntent = false;
         updateButton();
         setStatus('ws', '已断开', 'error');
-        setGlobalState('信令连接已断开', 'error');
-        showEmpty('连接已断开', '请检查网络后重新点击“开始观看”。');
+        setGlobalState('已断开', 'error');
+        showEmpty('已断开');
         log('warn', '信令连接已关闭');
       };
       ws.onerror = () => {
         setStatus('ws', '异常', 'error');
-        setGlobalState('信令连接异常', 'error');
+        setGlobalState('异常', 'error');
         log('error', '信令服务连接异常');
       };
     }
@@ -1288,26 +1417,28 @@
         ui.stage.style.aspectRatio = `${width} / ${height}`;
         ui.canvas.width = width;
         ui.canvas.height = height;
-        $('metricSize').textContent = `${width} × ${height}`;
+        $('metricSize').textContent = `${width}×${height}`;
       }
     });
 
-    ui.talk.addEventListener('click', () => {
+    function onTalkClick() {
       enableTalk(!talkEnabled);
-    });
+    }
+
+    ui.talk.addEventListener('click', onTalkClick);
+    ui.talkSide.addEventListener('click', onTalkClick);
 
     ui.go.addEventListener('click', () => {
       if (connectedIntent) disconnect();
       else connect();
     });
 
-    $('fullscreen').addEventListener('click', () => {
-      const target = ui.stage;
-      const request = target.requestFullscreen || target.webkitRequestFullscreen;
-      if (request) {
-        const result = request.call(target);
-        result?.catch?.((error) => log('warn', '无法进入全屏：', error));
-      }
+    $('fullscreen').addEventListener('click', requestFullscreen);
+    $('fullscreenSide').addEventListener('click', requestFullscreen);
+
+    ui.muteSide.addEventListener('click', () => {
+      setMuteUi(!audioMuted);
+      log('info', audioMuted ? '已静音' : '已取消静音');
     });
 
     $('clearLog').addEventListener('click', () => {
