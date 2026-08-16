@@ -50,6 +50,12 @@ media::FrameKind kind_from_type(uint32_t type, media::Codec codec,
             }
         }
     }
+    /*
+     * P / non-IDR NALU_SLICE → Inter (forward predicted).
+     * STREAM_B_FRAME → Inter for now (no FrameKind::B yet). Keep this branch:
+     * current VENC (NORMAL_P + Baseline) does not emit B, but the tag must stay
+     * for a future GOP/profile that enables B frames.
+     */
     if (type == STREAM_P_FRAME || type == STREAM_B_FRAME || type == STREAM_NALU_SLICE) {
         return media::FrameKind::Inter;
     }

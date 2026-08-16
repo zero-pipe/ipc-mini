@@ -5,11 +5,12 @@
 
 namespace zero_ipc{namespace util{
 
+/* Callback tag values for stream_head::type (keep numeric ABI stable). */
 #define STREAM_P_FRAME 0
 #define STREAM_I_FRAME 1
 #define STREAM_AUDIO_FRAME 2
-#define STREAM_B_FRAME 3
-#define STREAM_NALU_SLICE 4 
+#define STREAM_B_FRAME 3       /* reserved for B; current VENC GOP does not emit */
+#define STREAM_NALU_SLICE 4    /* H.264/H.265 path used by this project today */
 #define STREAM_MJPEG_FRAME 6
 
 #define IS_VIDEO_FRAME(n) ((n) == STREAM_I_FRAME  \
@@ -31,9 +32,17 @@ namespace zero_ipc{namespace util{
         uint32_t time_stamp;
     }nalu_t;
 
+    /*
+     * stream_head::type must match STREAM_* above:
+     *   0 P, 1 I, 2 audio, 3 B, 4 NALU_SLICE, 6 MJPEG
+     *
+     * This project's H.264/H.265 VENC currently sets type=STREAM_NALU_SLICE
+     * (I/P distinguished later via NALU). GOP=NORMAL_P + Baseline => no B
+     * frames today; STREAM_B_FRAME remains for a future GOP/profile change.
+     */
     typedef struct {
         uint32_t len;
-        uint32_t type; //0:p,1:i 2:audio 3:nalu
+        uint32_t type;
         uint32_t time_stamp;
 
         uint32_t nalu_count;

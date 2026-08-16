@@ -19,6 +19,15 @@ enum class Codec : uint8_t {
     G711U,
 };
 
+/*
+ * Media-bus frame kind (not the same field as stream_head::type).
+ *   Unknown — unrecognized
+ *   Key     — independently decodable (I/IDR)
+ *   Inter   — forward-predicted (P). Today STREAM_B_FRAME also maps here
+ *             as a temporary downgrade; add a distinct B when enabling B frames
+ *             (and separate PTS/DTS).
+ *   Audio   — audio frame
+ */
 enum class FrameKind : uint8_t {
     Unknown,
     Key,
