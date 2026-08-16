@@ -247,11 +247,11 @@ bool HisiliconPipeline::play_g711u(const uint8_t* data, size_t len)
     return hisilicon::dev::chn::play_g711u(data, len);
 }
 
-void HisiliconPipeline::set_detection_hub(
-    std::shared_ptr<media::DetectionHub> hub)
+void HisiliconPipeline::set_detection_source(
+    std::shared_ptr<media::DetectionSource> source)
 {
     std::lock_guard lock(stream_mutex_);
-    detection_hub_ = std::move(hub);
+    detection_source_ = std::move(source);
 }
 
 bool HisiliconPipeline::set_stream_active(
@@ -387,7 +387,7 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
 {
     std::shared_ptr<EncodedStreamChannel> channel;
     std::shared_ptr<AiStreamPublisher> publisher;
-    std::shared_ptr<media::DetectionHub> hub;
+    std::shared_ptr<media::DetectionSource> source;
     std::string model_file;
     int channel_id = 0;
     {
@@ -399,7 +399,7 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
         }
         channel = encoded_channel_;
         publisher = ai_publisher_;
-        hub = detection_hub_;
+        source = detection_source_;
         model_file = options_.yolov8_model_file;
         channel_id = options_.channel_id;
     }
@@ -411,16 +411,16 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
 
     auto detector = std::make_shared<hisilicon::dev::yolov8>(
         channel_id, AI_STREAM_ID, vi, model_file.c_str());
-    if (hub) {
+    if (source) {
         detector->set_detection_hook(
-            [hub](const hisilicon::dev::svp_npu_rect_info_t& info) {
-                media::DetectionFrame frame;
-                frame.pts_ms = 0;
-                frame.frame_width = 640;
-                frame.frame_height = 640;
+            [source](const hisilicon::dev::svp_npu_rect_info_t& info) {
+                media::DetectionResult result;
+                result.pts_ms = 0;
+                result.frame_width = 640;
+                result.frame_height = 640;
                 const td_u16 n =
                     std::min<td_u16>(info.num, SVP_RECT_NUM);
-                frame.boxes.reserve(n);
+                result.boxes.reserve(n);
                 for (td_u16 i = 0; i < n; ++i) {
                     const auto& r = info.rect[i];
                     media::DetectionBox box;
@@ -434,9 +434,9 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
                     box.y = y0 / 640.f;
                     box.w = (x1 - x0) / 640.f;
                     box.h = (y1 - y0) / 640.f;
-                    frame.boxes.push_back(box);
+                    result.boxes.push_back(box);
                 }
-                hub->publish(std::move(frame));
+                source->publish(std::move(result));
             });
     }
 

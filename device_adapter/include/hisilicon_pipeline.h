@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/device_pipeline.h"
-#include "media/detection_hub.h"
+#include "media/detection_source.h"
 #include "encoded_stream_channel.h"
 #include <condition_variable>
 #include <cstddef>
@@ -64,8 +64,8 @@ public:
     bool set_stream_active(int channel_id, int stream_id,
                            bool active) override;
     bool play_g711u(const uint8_t* data, size_t len) override;
-    void set_detection_hub(
-        std::shared_ptr<media::DetectionHub> hub) override;
+    void set_detection_source(
+        std::shared_ptr<media::DetectionSource> source) override;
 
 private:
     void stream_lifecycle_worker();
@@ -77,7 +77,7 @@ private:
     HisiliconPipelineOptions options_;
     std::shared_ptr<EncodedStreamChannel> encoded_channel_;
     std::shared_ptr<AiStreamPublisher> ai_publisher_;
-    std::shared_ptr<media::DetectionHub> detection_hub_;
+    std::shared_ptr<media::DetectionSource> detection_source_;
     std::shared_ptr<hisilicon::dev::yolov8> yolov8_;
     std::mutex stream_mutex_;
     std::condition_variable stream_cv_;

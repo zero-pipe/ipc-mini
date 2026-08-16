@@ -1,6 +1,6 @@
 #pragma once
 
-#include "media/detection_hub.h"
+#include "media/detection_source.h"
 #include "media/media_source.h"
 #include <cstddef>
 #include <memory>
@@ -9,12 +9,12 @@ namespace zero_ipc::core {
 
 /**
  * Shared runtime injected into every protocol plugin (DIP / LoD).
- * Plugins talk to MediaSource + DetectionHub only — never HiSilicon SDK.
+ * Plugins talk to MediaSource + DetectionSource only — never HiSilicon SDK.
  * Each plugin owns its own I/O poller and worker threads.
  */
 struct ProtocolContext {
     std::shared_ptr<media::MediaSource> media_source;
-    std::shared_ptr<media::DetectionHub> detections;
+    std::shared_ptr<media::DetectionSource> detection_source;
     std::size_t output_high_water_bytes{64 * 1024};
     std::size_t pending_frame_bytes_per_session{512 * 1024};
 };

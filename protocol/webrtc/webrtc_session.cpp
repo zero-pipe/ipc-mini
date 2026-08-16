@@ -233,7 +233,7 @@ void WebRtcPlugin::Impl::remove_viewer(const std::string& viewer_id,
     uint64_t release_ai = 0;
     uint64_t release_detection = 0;
     std::shared_ptr<media::MediaSource> media_ref;
-    std::shared_ptr<media::DetectionHub> detection_ref;
+    std::shared_ptr<media::DetectionSource> detection_ref;
     {
         std::lock_guard lock(mutex);
         const auto it = viewers.find(viewer_id);
@@ -244,7 +244,7 @@ void WebRtcPlugin::Impl::remove_viewer(const std::string& viewer_id,
         viewers.erase(it);
         pending_candidates.erase(viewer_id);
         media_ref = media;
-        detection_ref = detections;
+        detection_ref = detection_source;
 
         const bool any_connected = std::any_of(
             viewers.begin(), viewers.end(),

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "media/detection_hub.h"
+#include "media/detection_source.h"
 #include "media/media_source.h"
 #include <cstddef>
 #include <cstdint>
@@ -26,8 +26,8 @@ public:
     {
         return false;
     }
-    virtual void set_detection_hub(
-        std::shared_ptr<media::DetectionHub> /*hub*/)
+    virtual void set_detection_source(
+        std::shared_ptr<media::DetectionSource> /*source*/)
     {
     }
 };

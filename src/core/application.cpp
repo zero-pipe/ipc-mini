@@ -1,4 +1,5 @@
 #include "core/application.h"
+#include "media/detection_source.h"
 
 #include <utility>
 
@@ -33,7 +34,7 @@ bool Application::start()
 
     media_ = std::make_shared<media::MediaSource>(options_.channel_id,
                                                   options_.profile.gop_cache);
-    auto detections = std::make_shared<media::DetectionHub>();
+    auto detection_source = std::make_shared<media::DetectionSource>();
     media_->set_keyframe_request_handler(
         [this](int channel_id, int stream_id) {
             return device_ && device_->request_keyframe(channel_id, stream_id);
@@ -47,7 +48,7 @@ bool Application::start()
         [this](const uint8_t* data, size_t len) {
             return device_ && device_->play_g711u(data, len);
         });
-    device_->set_detection_hub(detections);
+    device_->set_detection_source(detection_source);
 
     if (!device_->start(media_)) {
         media_.reset();
@@ -58,7 +59,7 @@ bool Application::start()
     if (!protocols_.empty()) {
         ProtocolContext context;
         context.media_source = media_;
-        context.detections = detections;
+        context.detection_source = detection_source;
         context.output_high_water_bytes =
             options_.profile.protocol_output_high_water_bytes;
         context.pending_frame_bytes_per_session =

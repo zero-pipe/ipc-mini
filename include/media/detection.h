@@ -17,7 +17,7 @@ struct DetectionBox {
     std::string label;
 };
 
-struct DetectionFrame {
+struct DetectionResult {
     int64_t pts_ms{0};
     int frame_width{0};
     int frame_height{0};

@@ -50,7 +50,7 @@ LOCAL_CXX := \
 	src/media/media_frame.cpp \
 	src/media/gop_cache.cpp \
 	src/media/media_source.cpp \
-	src/media/detection_hub.cpp \
+	src/media/detection_source.cpp \
 	src/core/application.cpp \
 	protocol/webrtc/ws_client.cpp \
 	protocol/webrtc/signaling_client.cpp \

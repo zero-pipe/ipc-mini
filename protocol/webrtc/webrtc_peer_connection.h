@@ -62,7 +62,7 @@ public:
 
     bool write_video_frame(const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame);
     bool write_audio_frame(const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame);
-    bool send_detections(const zero_ipc::media::DetectionFrame& detections);
+    bool send_detections(const zero_ipc::media::DetectionResult& detections);
 
     void set_local_candidate_handler(LocalCandidateHandler handler);
     void set_local_sdp_handler(LocalSdpHandler handler);

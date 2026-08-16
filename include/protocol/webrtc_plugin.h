@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/protocol_plugin.h"
-#include "media/detection_hub.h"
 
 #include <cstdint>
 #include <memory>

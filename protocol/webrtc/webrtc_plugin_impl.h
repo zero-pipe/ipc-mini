@@ -59,7 +59,7 @@ struct WebRtcPlugin::Impl {
         std::deque<std::shared_ptr<const media::MediaFrame>> audio_queue;
         std::size_t video_bytes{0};
         std::size_t audio_bytes{0};
-        std::optional<media::DetectionFrame> latest_detection;
+        std::optional<media::DetectionResult> latest_detection;
         bool connected{false};
     };
 
@@ -74,7 +74,7 @@ struct WebRtcPlugin::Impl {
 
     WebRtcPluginOptions options;
     std::shared_ptr<media::MediaSource> media;
-    std::shared_ptr<media::DetectionHub> detections;
+    std::shared_ptr<media::DetectionSource> detection_source;
     std::shared_ptr<zero_mini::webrtc_net::SignalingClient> signaling;
 
     ztk_poller_pool* signaling_pool{nullptr};
@@ -135,7 +135,7 @@ struct WebRtcPlugin::Impl {
     void schedule_drain();
     void enqueue_video(std::shared_ptr<const media::MediaFrame> frame);
     void enqueue_audio(std::shared_ptr<const media::MediaFrame> frame);
-    void enqueue_detection(const media::DetectionFrame& detection);
+    void enqueue_detection(const media::DetectionResult& detection);
     void drain();
 };
 

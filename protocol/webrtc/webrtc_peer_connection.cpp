@@ -555,7 +555,7 @@ bool WebRtcPeerConnection::write_audio_frame(
 }
 
 bool WebRtcPeerConnection::send_detections(
-    const zero_ipc::media::DetectionFrame& detections)
+    const zero_ipc::media::DetectionResult& detections)
 {
     PRtcDataChannel dc = nullptr;
     {
@@ -691,7 +691,7 @@ bool WebRtcPeerConnection::write_audio_frame(
     return false;
 }
 
-bool WebRtcPeerConnection::send_detections(const zero_ipc::media::DetectionFrame&)
+bool WebRtcPeerConnection::send_detections(const zero_ipc::media::DetectionResult&)
 {
     return false;
 }

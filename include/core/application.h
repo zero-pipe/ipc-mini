@@ -3,7 +3,6 @@
 #include "resource_profile.h"
 #include "device_pipeline.h"
 #include "protocol_plugin.h"
-#include "media/detection_hub.h"
 #include "media/media_source.h"
 #include <cstddef>
 #include <memory>

@@ -9,13 +9,13 @@
 
 namespace zero_ipc::media {
 
-class DetectionHub final {
+class DetectionSource final {
 public:
-    using Handler = std::function<void(const DetectionFrame&)>;
+    using Handler = std::function<void(const DetectionResult&)>;
 
     uint64_t subscribe(Handler handler);
     void unsubscribe(uint64_t id);
-    void publish(DetectionFrame frame);
+    void publish(DetectionResult result);
     std::size_t subscriber_count() const;
 
 private:

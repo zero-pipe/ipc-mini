@@ -1,8 +1,10 @@
-#include "media/detection_hub.h"
+#include "media/detection_source.h"
+
+#include <vector>
 
 namespace zero_ipc::media {
 
-uint64_t DetectionHub::subscribe(Handler handler)
+uint64_t DetectionSource::subscribe(Handler handler)
 {
     if (!handler) {
         return 0;
@@ -13,13 +15,13 @@ uint64_t DetectionHub::subscribe(Handler handler)
     return id;
 }
 
-void DetectionHub::unsubscribe(uint64_t id)
+void DetectionSource::unsubscribe(uint64_t id)
 {
     std::lock_guard lock(mutex_);
     handlers_.erase(id);
 }
 
-void DetectionHub::publish(DetectionFrame frame)
+void DetectionSource::publish(DetectionResult result)
 {
     std::vector<Handler> snapshot;
     {
@@ -30,11 +32,11 @@ void DetectionHub::publish(DetectionFrame frame)
         }
     }
     for (auto& handler : snapshot) {
-        handler(frame);
+        handler(result);
     }
 }
 
-std::size_t DetectionHub::subscriber_count() const
+std::size_t DetectionSource::subscriber_count() const
 {
     std::lock_guard lock(mutex_);
     return handlers_.size();

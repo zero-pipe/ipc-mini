@@ -51,21 +51,21 @@ void WebRtcPlugin::Impl::start_ai_uplink()
         return;
     }
     std::shared_ptr<media::MediaSource> media_ref;
-    std::shared_ptr<media::DetectionHub> detection_ref;
+    std::shared_ptr<media::DetectionSource> detection_ref;
     {
         std::lock_guard lock(mutex);
         if (ai_hold_sub != 0) {
             return;
         }
         media_ref = media;
-        detection_ref = detections;
+        detection_ref = detection_source;
     }
     if (!media_ref || !detection_ref) {
         return;
     }
 
     const uint64_t detection_subscription = detection_ref->subscribe(
-        [this](const media::DetectionFrame& detection) {
+        [this](const media::DetectionResult& detection) {
             enqueue_detection(detection);
         });
     const uint64_t ai_subscription = media_ref->subscribe(
@@ -207,7 +207,7 @@ void WebRtcPlugin::Impl::enqueue_audio(
 }
 
 void WebRtcPlugin::Impl::enqueue_detection(
-    const media::DetectionFrame& detection)
+    const media::DetectionResult& detection)
 {
     if (!running.load()) {
         return;
@@ -239,7 +239,7 @@ void WebRtcPlugin::Impl::drain()
         std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer;
         std::deque<std::shared_ptr<const media::MediaFrame>> video_frames;
         std::deque<std::shared_ptr<const media::MediaFrame>> audio_frames;
-        std::optional<media::DetectionFrame> detection;
+        std::optional<media::DetectionResult> detection;
     };
     std::vector<Batch> batches;
     {

@@ -26,7 +26,7 @@ bool WebRtcPlugin::start(const core::ProtocolContext& context)
     }
 
     impl_->media = context.media_source;
-    impl_->detections = context.detections;
+    impl_->detection_source = context.detection_source;
     if (context.pending_frame_bytes_per_session > 0) {
         impl_->video_queue_limit = std::min(
             webrtc_detail::kVideoQueueBytes,
@@ -55,7 +55,7 @@ bool WebRtcPlugin::start(const core::ProtocolContext& context)
             std::lock_guard lock(impl_->mutex);
             impl_->signaling.reset();
             impl_->media.reset();
-            impl_->detections.reset();
+            impl_->detection_source.reset();
         }
         impl_->destroy_runtime();
         return false;
@@ -99,7 +99,7 @@ void WebRtcPlugin::stop()
         std::lock_guard lock(impl_->mutex);
         impl_->signaling.reset();
         impl_->media.reset();
-        impl_->detections.reset();
+        impl_->detection_source.reset();
         impl_->pending_candidates.clear();
     }
     impl_->destroy_runtime();
