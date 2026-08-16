@@ -1,8 +1,0 @@
-{
-   "time_osd" : {
-      "enable" : 1,
-      "font_size" : 32,
-      "x" : 32,
-      "y" : 32
-   }
-}

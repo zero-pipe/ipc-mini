@@ -175,7 +175,11 @@ LIBS += $(KVS_BUILD)/libkvsWebrtcClient.a
 LIBS += $(KVS_OPEN)/lib/libkvspic.a
 LIBS += $(KVS_OPEN)/lib/libkvspicState.a
 LIBS += $(KVS_OPEN)/lib/libkvspicUtils.a
+ifneq ($(wildcard $(KVS_OPEN)/lib/libsrtp3.a),)
+LIBS += $(KVS_OPEN)/lib/libsrtp3.a
+else
 LIBS += $(KVS_OPEN)/lib/libsrtp2.a
+endif
 LIBS += $(KVS_OPEN)/lib/libusrsctp.a
 LIBS += $(KVS_OPEN)/lib/libmbedtls.a
 LIBS += $(KVS_OPEN)/lib/libmbedx509.a

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "encoded_frame.h"
+#include "config/stream_config.h"
 #include "media/media_source.h"
 #include <memory>
 #include <string>
@@ -33,8 +34,10 @@ public:
                         const char* buf, int32_t len) override;
     void on_stream_error(zero_ipc::util::stream_obj_ptr sobj, int32_t error_code) override;
 
-    bool register_video_tracks(int width, int height, int frame_rate,
-                               media::Codec video_codec);
+    bool register_encoded_tracks(const config::StreamsConfig& streams,
+                                 media::Codec video_codec);
+    bool start_encoders(const config::EncodedStreamConfig& main,
+                        const config::EncodedStreamConfig& sub);
     bool register_audio_tracks(media::Codec audio_codec, int sample_rate,
                                int channels, int bits_per_sample);
 

@@ -132,16 +132,6 @@ std::string install_root_from_config_dir(const std::string& config_directory)
     return dirname_of(config_directory);
 }
 
-std::string remap_legacy_opt_path(const std::string& path,
-                                  const std::string& install_root)
-{
-    static constexpr char kLegacy[] = "/opt/zero_mini";
-    if (path.rfind(kLegacy, 0) != 0) {
-        return path;
-    }
-    return install_root + path.substr(sizeof(kLegacy) - 1);
-}
-
 /**
  * Config dir: --config-dir if given; else <exe-dir>/etc; else /opt/zero_mini/etc.
  * Fonts/yolov8 resolve from that config dir's parent.
@@ -164,36 +154,22 @@ void apply_runtime_config(const zero_ipc::config::RuntimeConfig& config,
                           CommandLineOptions& command_line)
 {
     command_line.device.lane_mode =
-        static_cast<lane_divide_mode_t>(config.video_input.lane_mode);
-    command_line.device.sensor_width = config.video_input.max_width;
-    command_line.device.sensor_height = config.video_input.max_height;
-    command_line.device.sensor_fps = config.video_input.frame_rate;
-    command_line.device.wdr_mode = config.video_input.wdr_mode;
-    command_line.device.sensor_name = config.video_input.sensor_name;
-    command_line.device.encoder_mode = config.video_encoder.mode;
-    command_line.device.video_width = config.video_encoder.width;
-    command_line.device.video_height = config.video_encoder.height;
-    command_line.device.video_fps = config.video_encoder.frame_rate;
-    command_line.device.bitrate_kbps = config.video_encoder.bitrate_kbps;
-    command_line.device.svc_enabled = config.video_encoder.svc_enabled;
-    command_line.device.audio_enabled = config.audio_encoder.enabled;
-    command_line.device.audio_microphone = config.audio_encoder.microphone;
-    command_line.device.audio_codec = config.audio_encoder.codec;
-    command_line.device.time_osd_enabled = config.time_osd.enabled;
-    command_line.device.time_osd_x = config.time_osd.x;
-    command_line.device.time_osd_y = config.time_osd.y;
-    command_line.device.time_osd_font_size = config.time_osd.font_size;
-    command_line.device.yolov8_enabled = config.yolov8.enabled;
-    command_line.device.yolov8_config_file = remap_legacy_opt_path(
-        config.yolov8.config_file, command_line.install_root);
-    command_line.device.yolov8_model_file = remap_legacy_opt_path(
-        config.yolov8.model_file, command_line.install_root);
+        static_cast<lane_divide_mode_t>(config.sensor.lane_mode);
+    command_line.device.sensor_width = config.sensor.width;
+    command_line.device.sensor_height = config.sensor.height;
+    command_line.device.sensor_fps = config.sensor.fps;
+    command_line.device.wdr_mode = config.sensor.wdr;
+    command_line.device.sensor_name = config.sensor.name;
+    command_line.device.streams = config.streams;
+    command_line.device.audio_enabled = config.audio.enable;
+    command_line.device.audio_microphone = config.audio.microphone;
+    command_line.device.audio_codec = config.audio.codec;
 
     command_line.webrtc.signaling_url = config.webrtc.signaling_url;
     command_line.webrtc.signaling_token = config.webrtc.signaling_token;
     command_line.webrtc.room = config.webrtc.room;
     command_line.webrtc.preview_stream_id = config.webrtc.preview_stream_id;
-    command_line.webrtc.detections_enabled = config.webrtc.detections_enabled;
+    command_line.webrtc.detections_enabled = config.webrtc.send_detections;
     command_line.webrtc.disable_twcc = config.webrtc.disable_twcc;
     command_line.webrtc.rolling_buffer_sec = config.webrtc.rolling_buffer_sec;
     command_line.webrtc.expected_bitrate_bps =
@@ -228,10 +204,11 @@ int main(int argc, char** argv)
         std::fprintf(stderr, "[zero_mini] config error: %s\n",
                      config_error.c_str());
         std::fprintf(stderr,
-                     "[zero_mini] hint: place etc/ beside binary, or pass "
-                     "--config-dir <package>/etc\n");
+                     "[zero_mini] hint: place etc/zero_mini.json beside binary, "
+                     "or pass --config-dir <package>/etc\n");
         return 1;
     }
+    config::resolve_runtime_paths(runtime_config, command_line.install_root);
     apply_runtime_config(runtime_config, command_line);
 
     const std::string font_path =
@@ -268,17 +245,26 @@ int main(int argc, char** argv)
         std::move(app_opts),
         std::make_unique<device_adapter::HisiliconPipeline>(command_line.device));
 
-    if (runtime_config.webrtc.enabled) {
+    if (runtime_config.webrtc.enable) {
         app.add_protocol(std::make_unique<protocol::WebRtcPlugin>(
             command_line.webrtc));
     }
 
+    std::printf("[zero_mini] streams %s\n",
+                config::format_streams_summary(runtime_config).c_str());
+    if (runtime_config.record.enable) {
+        std::fprintf(stderr,
+                     "[zero_mini] record file=%s (config loaded; muxer not wired yet)\n",
+                     runtime_config.record.file.c_str());
+    } else if (!runtime_config.record.file.empty()) {
+        std::printf("[zero_mini] record off file=%s\n",
+                    runtime_config.record.file.c_str());
+    }
     std::printf(
-        "[zero_mini] starting sensor=%s venc=%s %dx%d webrtc=%s room=%s\n",
+        "[zero_mini] starting sensor=%s webrtc=%s preview=%s room=%s\n",
         command_line.device.sensor_name.c_str(),
-        command_line.device.encoder_mode.c_str(),
-        command_line.device.video_width, command_line.device.video_height,
-        runtime_config.webrtc.enabled ? "on" : "off",
+        runtime_config.webrtc.enable ? "on" : "off",
+        runtime_config.webrtc.preview.c_str(),
         command_line.webrtc.room.c_str());
     std::printf("[zero_mini] signaling %s\n",
                 command_line.webrtc.signaling_url.c_str());

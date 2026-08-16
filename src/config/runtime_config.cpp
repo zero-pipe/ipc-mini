@@ -3,12 +3,27 @@
 #include <json/json.h>
 #include <cstdio>
 #include <string>
+#include <sys/stat.h>
 #include <utility>
 
 namespace zero_ipc::config {
 namespace {
 
 constexpr long kMaxConfigBytes = 64 * 1024;
+
+bool file_is_regular(const std::string& path)
+{
+    struct stat st {};
+    return ::stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode);
+}
+
+std::string path_join(const std::string& directory, const char* file)
+{
+    if (!directory.empty() && directory.back() == '/') {
+        return directory + file;
+    }
+    return directory + "/" + file;
+}
 
 bool read_json(const std::string& path, Json::Value& root, std::string& error)
 {
@@ -49,26 +64,13 @@ bool read_json(const std::string& path, Json::Value& root, std::string& error)
     return true;
 }
 
-std::string path_join(const std::string& directory, const char* file)
-{
-    if (!directory.empty() && directory.back() == '/') {
-        return directory + file;
-    }
-    return directory + "/" + file;
-}
-
-bool positive(int value)
-{
-    return value > 0;
-}
-
-bool required_string(const Json::Value& object, const char* file,
-                    const char* field, std::string& value,
-                    std::string& error)
+bool required_string(const Json::Value& object, const char* where,
+                     const char* field, std::string& value,
+                     std::string& error)
 {
     if (!object.isObject() || !object.isMember(field) ||
         !object[field].isString() || object[field].asString().empty()) {
-        error = std::string(file) + ":" + field +
+        error = std::string(where) + "." + field +
                 " must be a non-empty string";
         return false;
     }
@@ -76,19 +78,35 @@ bool required_string(const Json::Value& object, const char* file,
     return true;
 }
 
-bool required_int(const Json::Value& object, const char* file,
+bool optional_string(const Json::Value& object, const char* where,
+                     const char* field, const std::string& default_value,
+                     std::string& value, std::string& error)
+{
+    if (!object.isObject() || !object.isMember(field)) {
+        value = default_value;
+        return true;
+    }
+    if (!object[field].isString()) {
+        error = std::string(where) + "." + field + " must be a string";
+        return false;
+    }
+    value = object[field].asString();
+    return true;
+}
+
+bool required_int(const Json::Value& object, const char* where,
                   const char* field, int& value, std::string& error)
 {
     if (!object.isObject() || !object.isMember(field) ||
         !object[field].isInt()) {
-        error = std::string(file) + ":" + field + " must be an integer";
+        error = std::string(where) + "." + field + " must be an integer";
         return false;
     }
     value = object[field].asInt();
     return true;
 }
 
-bool optional_int(const Json::Value& object, const char* file,
+bool optional_int(const Json::Value& object, const char* where,
                   const char* field, int default_value, int& value,
                   std::string& error)
 {
@@ -96,14 +114,423 @@ bool optional_int(const Json::Value& object, const char* file,
         value = default_value;
         return true;
     }
-    return required_int(object, file, field, value, error);
+    return required_int(object, where, field, value, error);
 }
 
-} // namespace
+bool parse_bool(const Json::Value& value, bool& out)
+{
+    if (value.isBool()) {
+        out = value.asBool();
+        return true;
+    }
+    if (value.isInt()) {
+        out = value.asInt() != 0;
+        return true;
+    }
+    return false;
+}
 
-bool load_runtime_config(const std::string& directory,
-                         RuntimeConfig& config,
+bool required_bool(const Json::Value& object, const char* where,
+                   const char* field, bool& value, std::string& error)
+{
+    if (!object.isObject() || !object.isMember(field) ||
+        !parse_bool(object[field], value)) {
+        error = std::string(where) + "." + field +
+                " must be a boolean or 0/1";
+        return false;
+    }
+    return true;
+}
+
+bool optional_bool(const Json::Value& object, const char* where,
+                   const char* field, bool default_value, bool& value,
+                   std::string& error)
+{
+    if (!object.isObject() || !object.isMember(field)) {
+        value = default_value;
+        return true;
+    }
+    return required_bool(object, where, field, value, error);
+}
+
+bool parse_start(const Json::Value& object, const char* where,
+                 StreamStart default_value, StreamStart& value,
+                 std::string& error)
+{
+    if (!object.isObject() || !object.isMember("start")) {
+        value = default_value;
+        return true;
+    }
+    if (!object["start"].isString()) {
+        error = std::string(where) + ".start must be \"boot\" or \"on_demand\"";
+        return false;
+    }
+    const std::string text = object["start"].asString();
+    if (text == "boot") {
+        value = StreamStart::Boot;
+        return true;
+    }
+    if (text == "on_demand") {
+        value = StreamStart::OnDemand;
+        return true;
+    }
+    error = std::string(where) + ".start must be \"boot\" or \"on_demand\"";
+    return false;
+}
+
+bool supported_encoder_mode(const std::string& mode)
+{
+    return mode == "H264_CBR" || mode == "H264_AVBR" ||
+        mode == "H265_CBR" || mode == "H265_AVBR";
+}
+
+bool positive(int value)
+{
+    return value > 0;
+}
+
+bool parse_osd(const Json::Value& object, const char* where,
+               TimeOsdConfig& osd, std::string& error);
+
+bool parse_encoded_stream(const Json::Value& object, const char* where,
+                          const EncodedStreamConfig& defaults,
+                          EncodedStreamConfig& stream, std::string& error)
+{
+    if (!object.isObject()) {
+        error = std::string(where) + " must be an object";
+        return false;
+    }
+    if (!optional_bool(object, where, "enable", defaults.enable,
+                       stream.enable, error) ||
+        !parse_start(object, where, defaults.start, stream.start, error)) {
+        return false;
+    }
+    const Json::Value& encoder =
+        object.isMember("encoder") ? object["encoder"] : object;
+    const char* encoder_where =
+        object.isMember("encoder") ? "encoder" : where;
+    std::string encoder_where_buf;
+    if (object.isMember("encoder")) {
+        encoder_where_buf = std::string(where) + ".encoder";
+        encoder_where = encoder_where_buf.c_str();
+    }
+    if (!optional_string(encoder, encoder_where, "mode", defaults.mode,
+                         stream.mode, error) ||
+        !optional_int(encoder, encoder_where, "width", defaults.width,
+                      stream.width, error) ||
+        !optional_int(encoder, encoder_where, "height", defaults.height,
+                      stream.height, error) ||
+        !optional_int(encoder, encoder_where, "fps", defaults.fps,
+                      stream.fps, error) ||
+        !optional_int(encoder, encoder_where, "bitrate_kbps",
+                      defaults.bitrate_kbps, stream.bitrate_kbps, error) ||
+        !optional_bool(encoder, encoder_where, "svc", defaults.svc,
+                       stream.svc, error)) {
+        return false;
+    }
+    stream.osd = defaults.osd;
+    if (object.isMember("osd")) {
+        const std::string osd_where = std::string(where) + ".osd";
+        if (!parse_osd(object["osd"], osd_where.c_str(), stream.osd, error)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool parse_osd(const Json::Value& object, const char* where,
+               TimeOsdConfig& osd, std::string& error)
+{
+    if (!object.isObject()) {
+        error = std::string(where) + " must be an object";
+        return false;
+    }
+    return optional_bool(object, where, "enable", true, osd.enable, error) &&
+        optional_int(object, where, "x", 32, osd.x, error) &&
+        optional_int(object, where, "y", 32, osd.y, error) &&
+        optional_int(object, where, "font_size", 32, osd.font_size, error);
+}
+
+bool parse_ai_stream(const Json::Value& object, const char* where,
+                     AiStreamConfig& ai, std::string& error)
+{
+    if (!object.isObject()) {
+        error = std::string(where) + " must be an object";
+        return false;
+    }
+    if (!optional_bool(object, where, "enable", false, ai.enable, error) ||
+        !parse_start(object, where, StreamStart::OnDemand, ai.start, error) ||
+        !optional_string(object, where, "engine", "yolov8", ai.engine,
+                         error) ||
+        !optional_string(object, where, "model", "", ai.model, error) ||
+        !optional_string(object, where, "acl", "", ai.acl, error) ||
+        !optional_int(object, where, "width", 640, ai.width, error) ||
+        !optional_int(object, where, "height", 640, ai.height, error) ||
+        !optional_int(object, where, "fps", 1, ai.fps, error) ||
+        !optional_int(object, where, "idle_stop_sec", 5, ai.idle_stop_sec,
+                      error)) {
+        return false;
+    }
+    return true;
+}
+
+bool parse_ice_servers(const Json::Value& ice, const char* where,
+                       std::vector<WebRtcIceServerConfig>& servers,
+                       std::string& error)
+{
+    servers.clear();
+    if (ice.isNull()) {
+        return true;
+    }
+    if (!ice.isArray()) {
+        error = std::string(where) + " must be an array";
+        return false;
+    }
+    for (const auto& item : ice) {
+        if (!item.isObject() || !item.isMember("urls") ||
+            !item["urls"].isString()) {
+            error = std::string(where) + "[].urls must be a string";
+            return false;
+        }
+        WebRtcIceServerConfig server;
+        server.urls = item["urls"].asString();
+        if (item.isMember("username") && !item["username"].isString()) {
+            error = std::string(where) + "[].username must be a string";
+            return false;
+        }
+        if (item.isMember("credential") && !item["credential"].isString()) {
+            error = std::string(where) + "[].credential must be a string";
+            return false;
+        }
+        server.username = item.get("username", "").asString();
+        server.credential = item.get("credential", "").asString();
+        if (!server.urls.empty() && server.urls.size() <= 1024) {
+            servers.push_back(std::move(server));
+        }
+    }
+    return true;
+}
+
+bool parse_webrtc(const Json::Value& object, const char* where,
+                  WebRtcConfig& webrtc, std::string& error)
+{
+    if (!object.isObject()) {
+        error = std::string(where) + " must be an object";
+        return false;
+    }
+    if (!optional_bool(object, where, "enable", true, webrtc.enable, error) ||
+        !required_string(object, where, "signaling_url", webrtc.signaling_url,
+                         error) ||
+        !optional_string(object, where, "signaling_token", "",
+                         webrtc.signaling_token, error) ||
+        !optional_string(object, where, "room", "door-1", webrtc.room,
+                         error) ||
+        !optional_string(object, where, "preview", "sub", webrtc.preview,
+                         error) ||
+        !optional_bool(object, where, "send_detections", true,
+                       webrtc.send_detections, error) ||
+        !optional_bool(object, where, "disable_twcc", true,
+                       webrtc.disable_twcc, error) ||
+        !optional_int(object, where, "rolling_buffer_sec", 1,
+                      webrtc.rolling_buffer_sec, error) ||
+        !optional_int(object, where, "expected_bitrate_kbps", 1000,
+                      webrtc.expected_bitrate_kbps, error) ||
+        !optional_int(object, where, "max_viewers", 3, webrtc.max_viewers,
+                      error) ||
+        !parse_ice_servers(object["ice_servers"],
+                           (std::string(where) + ".ice_servers").c_str(),
+                           webrtc.ice_servers, error)) {
+        return false;
+    }
+    if (object.isMember("detections_enable") &&
+        !object.isMember("send_detections") &&
+        !optional_bool(object, where, "detections_enable", true,
+                       webrtc.send_detections, error)) {
+        return false;
+    }
+    if (object.isMember("preview_stream_id") &&
+        webrtc.preview == "sub") {
+        int preview_id = 1;
+        if (!optional_int(object, where, "preview_stream_id", 1, preview_id,
+                          error)) {
+            return false;
+        }
+        if (preview_id == 0) {
+            webrtc.preview = "main";
+        } else if (preview_id == 2) {
+            webrtc.preview = "ai";
+        } else {
+            webrtc.preview = "sub";
+        }
+    }
+    webrtc.preview_stream_id = stream_id_from_name(webrtc.preview);
+    if (webrtc.preview_stream_id < 0) {
+        error = std::string(where) + ".preview must be main, sub, or ai";
+        return false;
+    }
+    return true;
+}
+
+bool validate_config(const RuntimeConfig& config, std::string& error)
+{
+    const bool supported_signaling =
+        config.webrtc.signaling_url.rfind("ws://", 0) == 0 ||
+        config.webrtc.signaling_url.rfind("wss://", 0) == 0;
+    const auto& main = config.streams.main;
+    const auto& sub = config.streams.sub;
+    const auto& ai = config.streams.ai;
+    if (config.sensor.name.empty() ||
+        !positive(config.sensor.width) ||
+        !positive(config.sensor.height) ||
+        !positive(config.sensor.fps) ||
+        !main.enable ||
+        !supported_encoder_mode(main.mode) ||
+        !positive(main.width) || !positive(main.height) ||
+        !positive(main.fps) || !positive(main.bitrate_kbps) ||
+        (sub.enable &&
+         (!supported_encoder_mode(sub.mode) ||
+          !positive(sub.width) || !positive(sub.height) ||
+          !positive(sub.fps) || !positive(sub.bitrate_kbps))) ||
+        (ai.enable &&
+         (ai.engine != "yolov8" || ai.model.empty() || ai.acl.empty() ||
+          !positive(ai.width) || !positive(ai.height) ||
+          !positive(ai.fps) || ai.idle_stop_sec < 1 ||
+          ai.idle_stop_sec > 60)) ||
+        !supported_signaling ||
+        config.webrtc.signaling_url.empty() ||
+        config.webrtc.signaling_url.size() > 2048 ||
+        config.webrtc.room.empty() || config.webrtc.room.size() > 128 ||
+        config.webrtc.preview_stream_id < 0 ||
+        config.webrtc.preview_stream_id > 2 ||
+        config.webrtc.rolling_buffer_sec < 0 ||
+        config.webrtc.rolling_buffer_sec > 30 ||
+        !positive(config.webrtc.expected_bitrate_kbps) ||
+        config.webrtc.max_viewers < 1 ||
+        config.webrtc.max_viewers > 3 ||
+        (main.osd.enable &&
+         (main.osd.x < 0 || main.osd.y < 0 ||
+          !positive(main.osd.font_size))) ||
+        (sub.osd.enable &&
+         (sub.osd.x < 0 || sub.osd.y < 0 ||
+          !positive(sub.osd.font_size))) ||
+        (config.record.enable && config.record.file.empty())) {
+        error = "configuration contains unsupported mode, URL, stream, or numeric value";
+        return false;
+    }
+    if (config.audio.enable &&
+        config.audio.codec != "AAC" &&
+        config.audio.codec != "G711U") {
+        error = "audio.codec must be AAC or G711U";
+        return false;
+    }
+    return true;
+}
+
+void apply_inherit_modes(StreamsConfig& streams)
+{
+    if (streams.sub.mode == "inherit" || streams.sub.mode.empty()) {
+        streams.sub.mode = streams.main.mode;
+    }
+}
+
+bool load_zero_mini_json(const std::string& path, RuntimeConfig& config,
                          std::string& error)
+{
+    Json::Value root;
+    if (!read_json(path, root, error)) {
+        return false;
+    }
+    if (!root.isObject()) {
+        error = "zero_mini.json: root must be an object";
+        return false;
+    }
+
+    const Json::Value& sensor = root["sensor"];
+    if (!sensor.isObject()) {
+        error = "zero_mini.json: missing sensor";
+        return false;
+    }
+    if (!required_string(sensor, "sensor", "name", config.sensor.name, error) ||
+        !optional_int(sensor, "sensor", "lane_mode", 0,
+                      config.sensor.lane_mode, error) ||
+        !required_int(sensor, "sensor", "width", config.sensor.width, error) ||
+        !required_int(sensor, "sensor", "height", config.sensor.height,
+                      error) ||
+        !required_int(sensor, "sensor", "fps", config.sensor.fps, error) ||
+        !optional_int(sensor, "sensor", "wdr", 0, config.sensor.wdr, error)) {
+        return false;
+    }
+
+    if (root.isMember("audio")) {
+        const Json::Value& audio = root["audio"];
+        if (!audio.isObject()) {
+            error = "audio must be an object";
+            return false;
+        }
+        if (!optional_bool(audio, "audio", "enable", false,
+                           config.audio.enable, error) ||
+            !optional_bool(audio, "audio", "microphone", false,
+                           config.audio.microphone, error) ||
+            !optional_string(audio, "audio", "codec", "G711U",
+                             config.audio.codec, error)) {
+            return false;
+        }
+    }
+
+    const Json::Value& streams = root["streams"];
+    if (!streams.isObject()) {
+        error = "zero_mini.json: missing streams";
+        return false;
+    }
+    EncodedStreamConfig main_defaults;
+    EncodedStreamConfig sub_defaults;
+    sub_defaults.start = StreamStart::OnDemand;
+    sub_defaults.mode = "inherit";
+    sub_defaults.width = 720;
+    sub_defaults.height = 480;
+    sub_defaults.bitrate_kbps = 1000;
+    if (!parse_encoded_stream(streams["main"], "streams.main", main_defaults,
+                              config.streams.main, error) ||
+        !parse_encoded_stream(streams["sub"], "streams.sub", sub_defaults,
+                              config.streams.sub, error) ||
+        !parse_ai_stream(streams["ai"], "streams.ai", config.streams.ai,
+                         error)) {
+        return false;
+    }
+    if (!streams["sub"].isObject() || !streams["sub"].isMember("osd")) {
+        if (root.isMember("osd") &&
+            !parse_osd(root["osd"], "osd", config.streams.sub.osd, error)) {
+            return false;
+        }
+    }
+    apply_inherit_modes(config.streams);
+
+    if (root.isMember("record")) {
+        const Json::Value& record = root["record"];
+        if (!record.isObject()) {
+            error = "record must be an object";
+            return false;
+        }
+        if (!optional_bool(record, "record", "enable", false,
+                           config.record.enable, error) ||
+            !optional_string(record, "record", "file", "", config.record.file,
+                             error)) {
+            return false;
+        }
+    }
+
+    if (!root.isMember("webrtc")) {
+        error = "zero_mini.json: missing webrtc";
+        return false;
+    }
+    if (!parse_webrtc(root["webrtc"], "webrtc", config.webrtc, error)) {
+        return false;
+    }
+    return validate_config(config, error);
+}
+
+bool load_legacy_files(const std::string& directory, RuntimeConfig& config,
+                       std::string& error)
 {
     Json::Value root;
     if (!read_json(path_join(directory, "vi.json"), root, error)) {
@@ -115,17 +542,17 @@ bool load_runtime_config(const std::string& directory,
         return false;
     }
     if (!required_string(sensor, "vi.json:sensor1", "name",
-                         config.video_input.sensor_name, error) ||
+                         config.sensor.name, error) ||
         !required_int(sensor, "vi.json:sensor1", "lane_mode",
-                      config.video_input.lane_mode, error) ||
+                      config.sensor.lane_mode, error) ||
         !required_int(sensor, "vi.json:sensor1", "max_w",
-                      config.video_input.max_width, error) ||
+                      config.sensor.width, error) ||
         !required_int(sensor, "vi.json:sensor1", "max_h",
-                      config.video_input.max_height, error) ||
+                      config.sensor.height, error) ||
         !required_int(sensor, "vi.json:sensor1", "vi_fr",
-                      config.video_input.frame_rate, error) ||
+                      config.sensor.fps, error) ||
         !required_int(sensor, "vi.json:sensor1", "wdr_mode",
-                      config.video_input.wdr_mode, error)) {
+                      config.sensor.wdr, error)) {
         return false;
     }
 
@@ -138,20 +565,30 @@ bool load_runtime_config(const std::string& directory,
         error = "venc.json: missing venc1";
         return false;
     }
+    int svc = 0;
     if (!required_string(encoder, "venc.json:venc1", "name",
-                         config.video_encoder.mode, error) ||
+                         config.streams.main.mode, error) ||
         !required_int(encoder, "venc.json:venc1", "w",
-                      config.video_encoder.width, error) ||
+                      config.streams.main.width, error) ||
         !required_int(encoder, "venc.json:venc1", "h",
-                      config.video_encoder.height, error) ||
+                      config.streams.main.height, error) ||
         !required_int(encoder, "venc.json:venc1", "fr",
-                      config.video_encoder.frame_rate, error) ||
+                      config.streams.main.fps, error) ||
         !required_int(encoder, "venc.json:venc1", "bitrate",
-                      config.video_encoder.bitrate_kbps, error) ||
-        !required_int(encoder, "venc.json:venc1", "svc_enable",
-                      config.video_encoder.svc_enabled, error)) {
+                      config.streams.main.bitrate_kbps, error) ||
+        !required_int(encoder, "venc.json:venc1", "svc_enable", svc, error)) {
         return false;
     }
+    config.streams.main.enable = true;
+    config.streams.main.start = StreamStart::Boot;
+    config.streams.main.svc = svc != 0;
+    config.streams.sub.enable = true;
+    config.streams.sub.start = StreamStart::OnDemand;
+    config.streams.sub.mode = config.streams.main.mode;
+    config.streams.sub.width = 720;
+    config.streams.sub.height = 480;
+    config.streams.sub.fps = config.streams.main.fps;
+    config.streams.sub.bitrate_kbps = 1000;
 
     root.clear();
     if (!read_json(path_join(directory, "aenc.json"), root, error)) {
@@ -162,16 +599,14 @@ bool load_runtime_config(const std::string& directory,
         error = "aenc.json: missing aenc1";
         return false;
     }
-    int audio_enabled = 0;
-    int microphone_enabled = 0;
-    if (!required_int(audio, "aenc.json:aenc1", "enable", audio_enabled, error) ||
-        !required_int(audio, "aenc.json:aenc1", "is_mic", microphone_enabled, error) ||
+    if (!required_bool(audio, "aenc.json:aenc1", "enable",
+                       config.audio.enable, error) ||
+        !required_bool(audio, "aenc.json:aenc1", "is_mic",
+                       config.audio.microphone, error) ||
         !required_string(audio, "aenc.json:aenc1", "name",
-                         config.audio_encoder.codec, error)) {
+                         config.audio.codec, error)) {
         return false;
     }
-    config.audio_encoder.enabled = audio_enabled != 0;
-    config.audio_encoder.microphone = microphone_enabled != 0;
 
     root.clear();
     if (!read_json(path_join(directory, "net_service.json"), root, error)) {
@@ -183,96 +618,23 @@ bool load_runtime_config(const std::string& directory,
         error = "net_service.json: missing webrtc";
         return false;
     }
-    int webrtc_enabled = 1;
-    int detections_enabled = 1;
-    int disable_twcc = 1;
-    if (!optional_int(webrtc, "net_service.json:webrtc", "enable", 1,
-                      webrtc_enabled, error) ||
-        !required_string(webrtc, "net_service.json:webrtc", "signaling_url",
-                         config.webrtc.signaling_url, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "detections_enable", 1,
-                      detections_enabled, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "disable_twcc", 1,
-                      disable_twcc, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "preview_stream_id", 1,
-                      config.webrtc.preview_stream_id, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "rolling_buffer_sec", 1,
-                      config.webrtc.rolling_buffer_sec, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "expected_bitrate_kbps", 1000,
-                      config.webrtc.expected_bitrate_kbps, error) ||
-        !optional_int(webrtc, "net_service.json:webrtc", "max_viewers", 3,
-                      config.webrtc.max_viewers, error)) {
+    if (!parse_webrtc(webrtc, "net_service.json:webrtc", config.webrtc,
+                      error)) {
         return false;
-    }
-    config.webrtc.enabled = webrtc_enabled != 0;
-    config.webrtc.detections_enabled = detections_enabled != 0;
-    config.webrtc.disable_twcc = disable_twcc != 0;
-    if (webrtc.isMember("signaling_token") &&
-        !webrtc["signaling_token"].isString()) {
-        error = "net_service.json:webrtc:signaling_token must be a string";
-        return false;
-    }
-    config.webrtc.signaling_token =
-        webrtc.get("signaling_token", "").asString();
-    if (webrtc.isMember("room") && !webrtc["room"].isString()) {
-        error = "net_service.json:webrtc:room must be a string";
-        return false;
-    }
-    config.webrtc.room = webrtc.get("room", "door-1").asString();
-    config.webrtc.ice_servers.clear();
-    const Json::Value& ice = webrtc["ice_servers"];
-    if (webrtc.isMember("ice_servers") && !ice.isArray()) {
-        error = "net_service.json:webrtc:ice_servers must be an array";
-        return false;
-    }
-    if (ice.isArray()) {
-        for (const auto& item : ice) {
-            if (!item.isObject() || !item.isMember("urls") ||
-                !item["urls"].isString()) {
-                error = "net_service.json:webrtc:ice_servers[].urls must be a string";
-                return false;
-            }
-            WebRtcIceServerConfig server;
-            server.urls = item["urls"].asString();
-            if (item.isMember("username") && !item["username"].isString()) {
-                error = "net_service.json:webrtc:ice_servers[].username must be a string";
-                return false;
-            }
-            if (item.isMember("credential") && !item["credential"].isString()) {
-                error = "net_service.json:webrtc:ice_servers[].credential must be a string";
-                return false;
-            }
-            server.username = item.get("username", "").asString();
-            server.credential = item.get("credential", "").asString();
-            if (!server.urls.empty() && server.urls.size() <= 1024) {
-                config.webrtc.ice_servers.push_back(std::move(server));
-            }
-        }
     }
 
     root.clear();
     if (!read_json(path_join(directory, "osd.json"), root, error)) {
         return false;
     }
-    const Json::Value& time_osd = root["time_osd"];
-    if (!time_osd.isObject()) {
-        error = "osd.json: missing time_osd";
+    if (!parse_osd(root["time_osd"], "osd.json:time_osd",
+                   config.streams.sub.osd, error)) {
         return false;
     }
-    int osd_enabled = 1;
-    if (!required_int(time_osd, "osd.json:time_osd", "enable", osd_enabled, error) ||
-        !required_int(time_osd, "osd.json:time_osd", "x", config.time_osd.x, error) ||
-        !required_int(time_osd, "osd.json:time_osd", "y", config.time_osd.y, error) ||
-        !required_int(time_osd, "osd.json:time_osd", "font_size",
-                      config.time_osd.font_size, error)) {
-        return false;
-    }
-    config.time_osd.enabled = osd_enabled != 0;
 
     root.clear();
-    const std::string yolov8_config =
-        path_join(directory, "../yolov8/yolov8.json");
-    if (!read_json(yolov8_config, root, error)) {
+    if (!read_json(path_join(directory, "../yolov8/yolov8.json"), root,
+                   error)) {
         return false;
     }
     const Json::Value& yolov8 = root["yolov8"];
@@ -280,62 +642,95 @@ bool load_runtime_config(const std::string& directory,
         error = "yolov8.json: missing yolov8";
         return false;
     }
-    int yolov8_enabled = 1;
-    if (!required_int(yolov8, "yolov8.json:yolov8", "enable", yolov8_enabled, error) ||
+    if (!required_bool(yolov8, "yolov8.json:yolov8", "enable",
+                       config.streams.ai.enable, error) ||
         !required_string(yolov8, "yolov8.json:yolov8", "cfg_file",
-                         config.yolov8.config_file, error) ||
+                         config.streams.ai.acl, error) ||
         !required_string(yolov8, "yolov8.json:yolov8", "model_file",
-                         config.yolov8.model_file, error)) {
+                         config.streams.ai.model, error)) {
         return false;
     }
-    config.yolov8.enabled = yolov8_enabled != 0;
+    config.streams.ai.start = StreamStart::OnDemand;
+    config.streams.ai.engine = "yolov8";
+    config.streams.ai.width = 640;
+    config.streams.ai.height = 640;
+    config.streams.ai.fps = 1;
 
-    const bool supported_encoder_mode =
-        config.video_encoder.mode == "H264_CBR" ||
-        config.video_encoder.mode == "H264_AVBR" ||
-        config.video_encoder.mode == "H265_CBR" ||
-        config.video_encoder.mode == "H265_AVBR";
-    const bool supported_signaling_scheme =
-        config.webrtc.signaling_url.rfind("ws://", 0) == 0 ||
-        config.webrtc.signaling_url.rfind("wss://", 0) == 0;
-    if (config.video_input.sensor_name.empty() ||
-        !supported_encoder_mode ||
-        !supported_signaling_scheme ||
-        !positive(config.video_input.max_width) ||
-        !positive(config.video_input.max_height) ||
-        !positive(config.video_input.frame_rate) ||
-        !positive(config.video_encoder.width) ||
-        !positive(config.video_encoder.height) ||
-        !positive(config.video_encoder.frame_rate) ||
-        !positive(config.video_encoder.bitrate_kbps) ||
-        config.webrtc.signaling_url.empty() ||
-        config.webrtc.signaling_url.size() > 2048 ||
-        config.webrtc.room.empty() || config.webrtc.room.size() > 128 ||
-        config.webrtc.preview_stream_id < 0 ||
-        config.webrtc.preview_stream_id > 2 ||
-        config.webrtc.rolling_buffer_sec < 0 ||
-        config.webrtc.rolling_buffer_sec > 30 ||
-        !positive(config.webrtc.expected_bitrate_kbps) ||
-        config.webrtc.max_viewers < 1 ||
-        config.webrtc.max_viewers > 3 ||
-        config.time_osd.x < 0 || config.time_osd.y < 0 ||
-        !positive(config.time_osd.font_size)) {
-        error = "configuration contains unsupported mode, URL, stream, or numeric value";
-        return false;
+    const std::string record_path = path_join(directory, "mp4_save_info.json");
+    if (file_is_regular(record_path)) {
+        root.clear();
+        if (!read_json(record_path, root, error)) {
+            return false;
+        }
+        const Json::Value& record = root["mp4_save"];
+        if (!record.isObject()) {
+            error = "mp4_save_info.json: missing mp4_save";
+            return false;
+        }
+        if (!optional_bool(record, "mp4_save_info.json:mp4_save", "enable",
+                           false, config.record.enable, error) ||
+            !optional_string(record, "mp4_save_info.json:mp4_save", "file",
+                             "", config.record.file, error)) {
+            return false;
+        }
     }
-    if (config.yolov8.enabled &&
-        (config.yolov8.config_file.empty() ||
-         config.yolov8.model_file.empty())) {
-        error = "YOLOv8 is enabled but cfg_file or model_file is empty";
-        return false;
+
+    return validate_config(config, error);
+}
+
+} // namespace
+
+bool load_runtime_config(const std::string& directory,
+                         RuntimeConfig& config,
+                         std::string& error)
+{
+    const std::string unified = path_join(directory, "zero_mini.json");
+    if (file_is_regular(unified)) {
+        return load_zero_mini_json(unified, config, error);
     }
-    if (config.audio_encoder.enabled &&
-        config.audio_encoder.codec != "AAC" &&
-        config.audio_encoder.codec != "G711U") {
-        error = "aenc.json: name must be AAC or G711U";
-        return false;
-    }
-    return true;
+    return load_legacy_files(directory, config, error);
+}
+
+void resolve_runtime_paths(RuntimeConfig& config,
+                           const std::string& install_root)
+{
+    auto resolve = [&install_root](std::string path) {
+        static constexpr char kLegacy[] = "/opt/zero_mini";
+        if (path.empty()) {
+            return path;
+        }
+        if (path.rfind(kLegacy, 0) == 0) {
+            return install_root + path.substr(sizeof(kLegacy) - 1);
+        }
+        if (path[0] == '/') {
+            return path;
+        }
+        if (!install_root.empty() && install_root.back() == '/') {
+            return install_root + path;
+        }
+        return install_root + "/" + path;
+    };
+    config.streams.ai.model = resolve(config.streams.ai.model);
+    config.streams.ai.acl = resolve(config.streams.ai.acl);
+}
+
+std::string format_streams_summary(const RuntimeConfig& config)
+{
+    const auto& main = config.streams.main;
+    const auto& sub = config.streams.sub;
+    const auto& ai = config.streams.ai;
+    char buffer[384];
+    std::snprintf(
+        buffer, sizeof(buffer),
+        "main %dx%d@%d %s%s | sub %dx%d@%d %s%s | ai %dx%d@%d %s %s | record %s",
+        main.width, main.height, main.fps, stream_start_name(main.start),
+        main.osd.enable ? " osd" : "",
+        sub.width, sub.height, sub.fps, stream_start_name(sub.start),
+        sub.osd.enable ? " osd" : "",
+        ai.width, ai.height, ai.fps, stream_start_name(ai.start),
+        ai.enable ? ai.engine.c_str() : "off",
+        config.record.enable ? "on" : "off");
+    return buffer;
 }
 
 } // namespace zero_ipc::config

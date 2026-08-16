@@ -72,24 +72,62 @@ EncodedStreamChannel::EncodedStreamChannel(
 {
 }
 
-bool EncodedStreamChannel::register_video_tracks(
-    int width, int height, int frame_rate, media::Codec video_codec)
+bool EncodedStreamChannel::register_encoded_tracks(
+    const config::StreamsConfig& streams, media::Codec video_codec)
 {
-    if (!media_source_ || width <= 0 || height <= 0 || frame_rate <= 0) {
+    if (!media_source_ || !streams.main.enable ||
+        streams.main.width <= 0 || streams.main.height <= 0 ||
+        streams.main.fps <= 0) {
         return false;
     }
-    for (int stream = MAIN_STREAM_ID; stream <= SUB_STREAM_ID; ++stream) {
+    auto add_video = [this, video_codec](int stream_id,
+                                         const config::EncodedStreamConfig& stream) {
         media::StreamTrack track;
-        track.stream_id = stream;
+        track.stream_id = stream_id;
         track.type = media::MediaType::Video;
         track.video.codec = video_codec;
-        track.video.width = stream == MAIN_STREAM_ID ? width : 720;
-        track.video.height = stream == MAIN_STREAM_ID ? height : 480;
-        track.video.frame_rate = frame_rate;
+        track.video.width = stream.width;
+        track.video.height = stream.height;
+        track.video.frame_rate = stream.fps;
         track.clock_rate = 90000;
         media_source_->set_track(std::move(track));
+    };
+    add_video(MAIN_STREAM_ID, streams.main);
+    if (streams.sub.enable) {
+        add_video(SUB_STREAM_ID, streams.sub);
     }
     return true;
+}
+
+bool EncodedStreamChannel::start_encoders(
+    const config::EncodedStreamConfig& main,
+    const config::EncodedStreamConfig& sub)
+{
+    auto to_osd = [](const config::TimeOsdConfig& osd) {
+        hisilicon::dev::time_osd_options opt;
+        opt.enable = osd.enable;
+        opt.x = osd.x;
+        opt.y = osd.y;
+        opt.font_size = osd.font_size;
+        return opt;
+    };
+    hisilicon::dev::venc_encode_options main_opt;
+    main_opt.enable = main.enable;
+    main_opt.width = main.width;
+    main_opt.height = main.height;
+    main_opt.frame_rate = main.fps;
+    main_opt.bitrate_kbps = main.bitrate_kbps;
+    main_opt.svc_enable = main.svc ? 1 : 0;
+    main_opt.osd = to_osd(main.osd);
+    hisilicon::dev::venc_encode_options sub_opt;
+    sub_opt.enable = sub.enable;
+    sub_opt.width = sub.width;
+    sub_opt.height = sub.height;
+    sub_opt.frame_rate = sub.fps;
+    sub_opt.bitrate_kbps = sub.bitrate_kbps;
+    sub_opt.svc_enable = 0;
+    sub_opt.osd = to_osd(sub.osd);
+    return start(main_opt, sub_opt);
 }
 
 bool EncodedStreamChannel::register_audio_tracks(

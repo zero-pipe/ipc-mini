@@ -26,7 +26,25 @@ namespace hisilicon{namespace dev{
     bool chn::start(int32_t venc_w,int32_t venc_h,int32_t fr,int32_t bitrate,
                     int32_t svc_enable,const time_osd_options& time_osd)
     {
-        if(m_is_start || m_chn < 0 || m_chn >= MAX_CHANNEL)
+        venc_encode_options main;
+        main.width = venc_w;
+        main.height = venc_h;
+        main.frame_rate = fr;
+        main.bitrate_kbps = bitrate;
+        main.svc_enable = svc_enable;
+        venc_encode_options sub;
+        sub.width = 720;
+        sub.height = 480;
+        sub.frame_rate = fr;
+        sub.bitrate_kbps = 1000;
+        sub.osd = time_osd;
+        return start(main, sub);
+    }
+
+    bool chn::start(const venc_encode_options& main,
+                    const venc_encode_options& sub)
+    {
+        if(m_is_start || m_chn < 0 || m_chn >= MAX_CHANNEL || !main.enable)
         {
             DEV_WRITE_LOG_ERROR("invalid channel=%d", m_chn);
             return false;
@@ -62,9 +80,9 @@ namespace hisilicon{namespace dev{
             return false;
         }
 
-        if(venc_w > m_vi_ptr->w()
-                || venc_h > m_vi_ptr->h()
-                || fr > m_vi_ptr->fr())
+        if(main.width > m_vi_ptr->w()
+                || main.height > m_vi_ptr->h()
+                || main.frame_rate > m_vi_ptr->fr())
         {
             DEV_WRITE_LOG_ERROR("invalid param");
             return false;
@@ -74,13 +92,13 @@ namespace hisilicon{namespace dev{
         std::shared_ptr<vi_isp> viisp = std::dynamic_pointer_cast<vi_isp>(m_vi_ptr);
         if(viisp)
         {
-            if(viisp->vpss_chn_attr().width != (td_u32)venc_w)
+            if(viisp->vpss_chn_attr().width != (td_u32)main.width)
             {
-                viisp->vpss_chn_attr().width = venc_w;
+                viisp->vpss_chn_attr().width = main.width;
             }
-            if(viisp->vpss_chn_attr().height != (td_u32)venc_h)
+            if(viisp->vpss_chn_attr().height != (td_u32)main.height)
             {
-                viisp->vpss_chn_attr().height = venc_h;
+                viisp->vpss_chn_attr().height = main.height;
             }
         }
 
@@ -91,69 +109,118 @@ namespace hisilicon{namespace dev{
             return false;
         }
 
-        if(m_venc_mode == "H264_CBR")
-        {
-            m_venc_main_ptr = std::make_shared<venc_h264_cbr>(m_chn,MAIN_STREAM_ID,venc_w,venc_h,m_vi_ptr->fr(),fr,m_vi_ptr->vpss_grp(),m_vi_ptr->vpss_chn(),bitrate,svc_enable,-1);
-            m_venc_sub_ptr  = std::make_shared<venc_h264_cbr>(m_chn,SUB_STREAM_ID,720,480,fr,fr,-1,-1,1000,0,m_venc_main_ptr->venc_chn());
-        }
-        else if(m_venc_mode == "H264_AVBR")
-        {
-            m_venc_main_ptr = std::make_shared<venc_h264_avbr>(m_chn,MAIN_STREAM_ID,venc_w,venc_h,m_vi_ptr->fr(),fr,m_vi_ptr->vpss_grp(),m_vi_ptr->vpss_chn(),bitrate,svc_enable,-1);
-            m_venc_sub_ptr  = std::make_shared<venc_h264_avbr>(m_chn,SUB_STREAM_ID,720,480,fr,fr,-1,-1,1000,0,m_venc_main_ptr->venc_chn());
-        }
-        else if(m_venc_mode == "H265_CBR")
-        {
-            m_venc_main_ptr = std::make_shared<venc_h265_cbr>(m_chn,MAIN_STREAM_ID,venc_w,venc_h,m_vi_ptr->fr(),fr,m_vi_ptr->vpss_grp(),m_vi_ptr->vpss_chn(),bitrate,svc_enable,-1);
-            m_venc_sub_ptr  = std::make_shared<venc_h265_cbr>(m_chn,SUB_STREAM_ID,720,480,fr,fr,-1,-1,1000,0,m_venc_main_ptr->venc_chn());
-        }
-        else if(m_venc_mode == "H265_AVBR")
-        {
-            m_venc_main_ptr = std::make_shared<venc_h265_avbr>(m_chn,MAIN_STREAM_ID,venc_w,venc_h,m_vi_ptr->fr(),fr,m_vi_ptr->vpss_grp(),m_vi_ptr->vpss_chn(),bitrate,svc_enable,-1);
-            m_venc_sub_ptr  = std::make_shared<venc_h265_avbr>(m_chn,SUB_STREAM_ID,720,480,fr,fr,-1,-1,1000,0,m_venc_main_ptr->venc_chn());
-        }
-        else
+        auto make_venc = [this](int32_t stream_id, const venc_encode_options& opt,
+                                int32_t src_fr, int32_t vpss_grp, int32_t vpss_chn,
+                                int32_t bind_venc) -> std::shared_ptr<venc> {
+            if(m_venc_mode == "H264_CBR")
+            {
+                return std::make_shared<venc_h264_cbr>(
+                    m_chn, stream_id, opt.width, opt.height, src_fr, opt.frame_rate,
+                    vpss_grp, vpss_chn, opt.bitrate_kbps, opt.svc_enable, bind_venc);
+            }
+            if(m_venc_mode == "H264_AVBR")
+            {
+                return std::make_shared<venc_h264_avbr>(
+                    m_chn, stream_id, opt.width, opt.height, src_fr, opt.frame_rate,
+                    vpss_grp, vpss_chn, opt.bitrate_kbps, opt.svc_enable, bind_venc);
+            }
+            if(m_venc_mode == "H265_CBR")
+            {
+                return std::make_shared<venc_h265_cbr>(
+                    m_chn, stream_id, opt.width, opt.height, src_fr, opt.frame_rate,
+                    vpss_grp, vpss_chn, opt.bitrate_kbps, opt.svc_enable, bind_venc);
+            }
+            if(m_venc_mode == "H265_AVBR")
+            {
+                return std::make_shared<venc_h265_avbr>(
+                    m_chn, stream_id, opt.width, opt.height, src_fr, opt.frame_rate,
+                    vpss_grp, vpss_chn, opt.bitrate_kbps, opt.svc_enable, bind_venc);
+            }
+            return nullptr;
+        };
+
+        m_venc_main_ptr = make_venc(MAIN_STREAM_ID, main, m_vi_ptr->fr(),
+                                    m_vi_ptr->vpss_grp(), m_vi_ptr->vpss_chn(), -1);
+        if(!m_venc_main_ptr)
         {
             DEV_WRITE_LOG_ERROR("invalid venc mode");
             m_vi_ptr->stop();
             m_vi_ptr = nullptr;
             return false;
         }
+        if(sub.enable)
+        {
+            venc_encode_options sub_opt = sub;
+            sub_opt.svc_enable = 0;
+            m_venc_sub_ptr = make_venc(SUB_STREAM_ID, sub_opt, sub.frame_rate,
+                                       -1, -1, m_venc_main_ptr->venc_chn());
+        }
 
         if(!m_venc_main_ptr->start()
-                || !m_venc_sub_ptr->prepare())
+                || (m_venc_sub_ptr && !m_venc_sub_ptr->prepare()))
         {
             DEV_WRITE_LOG_ERROR("venc start failed");
             m_venc_main_ptr->stop();
-            m_venc_sub_ptr->stop();
+            if(m_venc_sub_ptr)
+            {
+                m_venc_sub_ptr->stop();
+            }
             m_venc_main_ptr = nullptr;
             m_venc_sub_ptr = nullptr;
-
             m_vi_ptr->stop();
             m_vi_ptr = nullptr;
             return false;
         }
 
-        if(time_osd.enable)
-        {
-            m_time_osd = std::make_shared<osd_date>(
-                time_osd.x,time_osd.y,time_osd.font_size,
-                m_venc_sub_ptr->venc_chn());
-            if(!m_time_osd->start())
+        auto start_time_osd = [](std::shared_ptr<osd_date>& slot,
+                                 const time_osd_options& osd,
+                                 ot_venc_chn venc_chn,
+                                 const char* name) {
+            if(!osd.enable)
             {
-                DEV_WRITE_LOG_ERROR("time osd start failed");
-                m_time_osd.reset();
-                m_venc_main_ptr->stop();
-                m_venc_sub_ptr->stop();
-                m_vi_ptr->stop();
-                m_venc_main_ptr.reset();
-                m_venc_sub_ptr.reset();
-                m_vi_ptr.reset();
-                return false;
+                return true;
             }
+            slot = std::make_shared<osd_date>(osd.x, osd.y, osd.font_size, venc_chn);
+            if(slot->start())
+            {
+                return true;
+            }
+            DEV_WRITE_LOG_ERROR("time osd start failed on %s", name);
+            slot.reset();
+            return false;
+        };
+        if(!start_time_osd(m_time_osd_main, main.osd, m_venc_main_ptr->venc_chn(), "main")
+                || (m_venc_sub_ptr
+                    && !start_time_osd(m_time_osd_sub, sub.osd,
+                                       m_venc_sub_ptr->venc_chn(), "sub")))
+        {
+            if(m_time_osd_main)
+            {
+                m_time_osd_main->stop();
+                m_time_osd_main.reset();
+            }
+            if(m_time_osd_sub)
+            {
+                m_time_osd_sub->stop();
+                m_time_osd_sub.reset();
+            }
+            m_venc_main_ptr->stop();
+            if(m_venc_sub_ptr)
+            {
+                m_venc_sub_ptr->stop();
+            }
+            m_vi_ptr->stop();
+            m_venc_main_ptr.reset();
+            m_venc_sub_ptr.reset();
+            m_vi_ptr.reset();
+            return false;
         }
 
         m_venc_main_ptr->register_stream_observer(shared_from_this());
-        m_venc_sub_ptr->register_stream_observer(shared_from_this());
+        if(m_venc_sub_ptr)
+        {
+            m_venc_sub_ptr->register_stream_observer(shared_from_this());
+        }
 
         g_chns[m_chn] = shared_from_this();
         m_sub_stream_running = false;
@@ -169,18 +236,31 @@ namespace hisilicon{namespace dev{
         }
         m_is_start = false;
 
-        if(m_time_osd)
+        if(m_time_osd_main)
         {
-            m_time_osd->stop();
-            m_time_osd.reset();
+            m_time_osd_main->stop();
+            m_time_osd_main.reset();
+        }
+        if(m_time_osd_sub)
+        {
+            m_time_osd_sub->stop();
+            m_time_osd_sub.reset();
         }
 
-        m_venc_main_ptr->unregister_stream_observer(shared_from_this());
-        m_venc_sub_ptr->unregister_stream_observer(shared_from_this());
-
-        m_venc_main_ptr->stop();
-        m_venc_sub_ptr->stop();
-        m_vi_ptr->stop();
+        if(m_venc_main_ptr)
+        {
+            m_venc_main_ptr->unregister_stream_observer(shared_from_this());
+            m_venc_main_ptr->stop();
+        }
+        if(m_venc_sub_ptr)
+        {
+            m_venc_sub_ptr->unregister_stream_observer(shared_from_this());
+            m_venc_sub_ptr->stop();
+        }
+        if(m_vi_ptr)
+        {
+            m_vi_ptr->stop();
+        }
 
         m_venc_main_ptr = nullptr;
         m_venc_sub_ptr = nullptr;

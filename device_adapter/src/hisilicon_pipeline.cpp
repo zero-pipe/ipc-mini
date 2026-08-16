@@ -14,10 +14,7 @@
 namespace zero_ipc::device_adapter {
 namespace {
 
-constexpr int kAiDefaultWidth = 640;
-constexpr int kAiDefaultHeight = 640;
-constexpr int kAiDefaultFps = 1;
-constexpr int kAiIdleStopSeconds = 5;
+constexpr int kDefaultIdleStopSeconds = 5;
 
 media::Codec audio_codec_from_name(const std::string& name)
 {
@@ -31,6 +28,12 @@ media::Codec audio_codec_from_name(const std::string& name)
 }
 
 } // namespace
+
+int HisiliconPipeline::ai_idle_stop_seconds() const
+{
+    const int seconds = options_.streams.ai.idle_stop_sec;
+    return seconds > 0 ? seconds : kDefaultIdleStopSeconds;
+}
 
 HisiliconPipeline::HisiliconPipeline(HisiliconPipelineOptions options)
     : options_(std::move(options))
@@ -55,8 +58,9 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
     }
     sys_inited_ = true;
 
+    const auto& streams = options_.streams;
     const bool need_osd =
-        options_.time_osd_enabled || options_.yolov8_enabled;
+        streams.main.osd.enable || streams.sub.osd.enable || streams.ai.enable;
     if (need_osd) {
         if (!options_.font_path.empty()) {
             g_freetype.set_font_path(options_.font_path.c_str());
@@ -69,7 +73,8 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
                          options_.font_path.empty()
                              ? "(default)"
                              : options_.font_path.c_str());
-            options_.time_osd_enabled = false;
+            options_.streams.main.osd.enable = false;
+            options_.streams.sub.osd.enable = false;
             osd_inited_ = false;
         } else {
             osd_inited_ = true;
@@ -77,17 +82,16 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
     }
 
     encoded_channel_ = std::make_shared<EncodedStreamChannel>(
-        options_.sensor_name.c_str(), options_.encoder_mode.c_str(),
+        options_.sensor_name.c_str(), streams.main.mode.c_str(),
         options_.channel_id, source);
     const media::Codec codec =
-        std::string(options_.encoder_mode).find("H265") != std::string::npos
+        streams.main.mode.find("H265") != std::string::npos
             ? media::Codec::H265
             : media::Codec::H264;
-    hisilicon::dev::time_osd_options time_osd;
-    time_osd.enable = options_.time_osd_enabled && osd_inited_;
-    time_osd.x = options_.time_osd_x;
-    time_osd.y = options_.time_osd_y;
-    time_osd.font_size = options_.time_osd_font_size;
+    if (!osd_inited_) {
+        options_.streams.main.osd.enable = false;
+        options_.streams.sub.osd.enable = false;
+    }
 
     auto fail_cleanup = [this]() {
         stop_yolov8_locked();
@@ -112,11 +116,15 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
         }
     };
 
-    if (!encoded_channel_->register_video_tracks(
-            options_.video_width, options_.video_height, options_.video_fps, codec) ||
-        !encoded_channel_->start(
-            options_.video_width, options_.video_height, options_.video_fps,
-            options_.bitrate_kbps, options_.svc_enabled, time_osd)) {
+    if (!encoded_channel_->register_encoded_tracks(streams, codec) ||
+        !encoded_channel_->start_encoders(options_.streams.main,
+                                          options_.streams.sub)) {
+        fail_cleanup();
+        return false;
+    }
+    if (streams.sub.enable &&
+        streams.sub.start == config::StreamStart::Boot &&
+        !encoded_channel_->set_sub_stream_enabled(true)) {
         fail_cleanup();
         return false;
     }
@@ -147,10 +155,9 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
         }
     }
 
-    if (options_.yolov8_enabled) {
-        if (options_.yolov8_config_file.empty() ||
-            options_.yolov8_model_file.empty() ||
-            !hisilicon::dev::svp::init(options_.yolov8_config_file.c_str())) {
+    if (streams.ai.enable) {
+        if (streams.ai.acl.empty() || streams.ai.model.empty() ||
+            !hisilicon::dev::svp::init(streams.ai.acl.c_str())) {
             fail_cleanup();
             return false;
         }
@@ -158,28 +165,31 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
 
         ai_publisher_ = std::make_shared<AiStreamPublisher>(source);
         if (!ai_publisher_->register_track(
-                kAiDefaultWidth, kAiDefaultHeight, kAiDefaultFps)) {
+                streams.ai.width, streams.ai.height, streams.ai.fps)) {
             fail_cleanup();
             return false;
         }
     }
 
     hisilicon::dev::chn::start_capture(true);
-    /* Main encoding is permanent; secondary/AI encoding starts on demand. */
     hisilicon::dev::chn::request_i_frame(options_.channel_id, 0);
     {
         std::lock_guard lock(stream_mutex_);
         stream_worker_stop_ = false;
         ai_worker_stop_ = false;
-        sub_stream_required_ = false;
-        ai_stream_required_ = false;
+        sub_stream_required_ =
+            streams.sub.enable &&
+            streams.sub.start == config::StreamStart::Boot;
+        ai_stream_required_ =
+            streams.ai.enable &&
+            streams.ai.start == config::StreamStart::Boot;
         ++stream_generation_;
         ++ai_generation_;
         running_ = true;
     }
     stream_worker_ =
         std::thread(&HisiliconPipeline::stream_lifecycle_worker, this);
-    if (options_.yolov8_enabled) {
+    if (streams.ai.enable) {
         ai_worker_ =
             std::thread(&HisiliconPipeline::ai_lifecycle_worker, this);
     }
@@ -264,7 +274,7 @@ bool HisiliconPipeline::set_stream_active(
         return true;
     }
     if (stream_id == AI_STREAM_ID) {
-        if (!options_.yolov8_enabled) {
+        if (!options_.streams.ai.enable) {
             return false;
         }
         std::lock_guard lock(stream_mutex_);
@@ -281,7 +291,7 @@ bool HisiliconPipeline::set_stream_active(
         ai_cv_.notify_all();
         return true;
     }
-    if (stream_id != SUB_STREAM_ID) {
+    if (stream_id != SUB_STREAM_ID || !options_.streams.sub.enable) {
         return false;
     }
 
@@ -316,7 +326,7 @@ void HisiliconPipeline::stream_lifecycle_worker()
         }
         const uint64_t generation = stream_generation_;
         const bool changed = stream_cv_.wait_for(
-            lock, std::chrono::seconds(kAiIdleStopSeconds),
+            lock, std::chrono::seconds(ai_idle_stop_seconds()),
             [this, generation] {
                 return stream_worker_stop_ || sub_stream_required_ ||
                     stream_generation_ != generation;
@@ -370,7 +380,7 @@ void HisiliconPipeline::ai_lifecycle_worker()
         if (!ai_stream_required_ && yolov8_) {
             const uint64_t generation = ai_generation_;
             const bool changed = ai_cv_.wait_for(
-                lock, std::chrono::seconds(kAiIdleStopSeconds),
+                lock, std::chrono::seconds(ai_idle_stop_seconds()),
                 [this, generation] {
                     return ai_worker_stop_ || ai_stream_required_ ||
                         ai_generation_ != generation;
@@ -390,6 +400,9 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
     std::shared_ptr<media::DetectionSource> source;
     std::string model_file;
     int channel_id = 0;
+    int ai_width = 640;
+    int ai_height = 640;
+    int ai_fps = 1;
     {
         std::lock_guard lock(stream_mutex_);
         if (ai_worker_stop_ || !ai_stream_required_ ||
@@ -400,8 +413,11 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
         channel = encoded_channel_;
         publisher = ai_publisher_;
         source = detection_source_;
-        model_file = options_.yolov8_model_file;
+        model_file = options_.streams.ai.model;
         channel_id = options_.channel_id;
+        ai_width = options_.streams.ai.width;
+        ai_height = options_.streams.ai.height;
+        ai_fps = options_.streams.ai.fps;
     }
 
     auto vi = channel->video_input();
@@ -413,11 +429,14 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
         channel_id, AI_STREAM_ID, vi, model_file.c_str());
     if (source) {
         detector->set_detection_hook(
-            [source](const hisilicon::dev::svp_npu_rect_info_t& info) {
+            [source, ai_width, ai_height](
+                const hisilicon::dev::svp_npu_rect_info_t& info) {
                 media::DetectionResult result;
                 result.pts_ms = 0;
-                result.frame_width = 640;
-                result.frame_height = 640;
+                result.frame_width = ai_width;
+                result.frame_height = ai_height;
+                const float norm_w = ai_width > 0 ? static_cast<float>(ai_width) : 640.f;
+                const float norm_h = ai_height > 0 ? static_cast<float>(ai_height) : 640.f;
                 const td_u16 n =
                     std::min<td_u16>(info.num, SVP_RECT_NUM);
                 result.boxes.reserve(n);
@@ -430,10 +449,10 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
                     const float y0 = static_cast<float>(r.point[0].y);
                     const float x1 = static_cast<float>(r.point[2].x);
                     const float y1 = static_cast<float>(r.point[2].y);
-                    box.x = x0 / 640.f;
-                    box.y = y0 / 640.f;
-                    box.w = (x1 - x0) / 640.f;
-                    box.h = (y1 - y0) / 640.f;
+                    box.x = x0 / norm_w;
+                    box.y = y0 / norm_h;
+                    box.w = (x1 - x0) / norm_w;
+                    box.h = (y1 - y0) / norm_h;
                     result.boxes.push_back(box);
                 }
                 source->publish(std::move(result));
@@ -455,7 +474,7 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
             return false;
         }
         if (width > 0 && height > 0) {
-            publisher->register_track(width, height, kAiDefaultFps);
+            publisher->register_track(width, height, ai_fps);
         }
         detector->register_stream_observer(publisher);
         yolov8_ = std::move(detector);

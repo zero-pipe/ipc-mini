@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config/stream_config.h"
 #include "core/device_pipeline.h"
 #include "media/detection_source.h"
 #include "encoded_stream_channel.h"
@@ -22,31 +23,18 @@ class AiStreamPublisher;
 struct HisiliconPipelineOptions {
     int32_t sys_flag{0};
     lane_divide_mode_t lane_mode{};
-    /** Sensor/VI capture size — must match sensor mode (SC4336P: 2560x1440@30). */
     int32_t sensor_width{2560};
     int32_t sensor_height{1440};
     int32_t sensor_fps{30};
     int32_t wdr_mode{0};
     std::string sensor_name{"SC4336P"};
-    std::string encoder_mode{"H264_CBR"};
     int32_t channel_id{0};
-    int32_t video_width{1920};
-    int32_t video_height{1080};
-    int32_t video_fps{25};
-    int32_t bitrate_kbps{2048};
-    int32_t svc_enabled{0};
+    config::StreamsConfig streams;
     bool audio_enabled{false};
     bool audio_microphone{false};
     std::string audio_codec{"G711U"};
-    bool time_osd_enabled{true};
-    int32_t time_osd_x{32};
-    int32_t time_osd_y{32};
-    int32_t time_osd_font_size{32};
     /** Empty → keep FontRenderer default (/opt/zero_mini/fonts/...). */
     std::string font_path;
-    bool yolov8_enabled{false};
-    std::string yolov8_config_file;
-    std::string yolov8_model_file;
 };
 
 /**
@@ -70,9 +58,9 @@ public:
 private:
     void stream_lifecycle_worker();
     void ai_lifecycle_worker();
-    /** Load/start YOLO off the WebRTC path. generation must match ai_generation_. */
     bool start_yolov8_async(uint64_t generation);
     void stop_yolov8_locked();
+    int ai_idle_stop_seconds() const;
 
     HisiliconPipelineOptions options_;
     std::shared_ptr<EncodedStreamChannel> encoded_channel_;

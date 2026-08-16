@@ -1,7 +1,0 @@
-{
-   "yolov8" : {
-      "cfg_file" : "/opt/zero_mini/yolov8/acl.json",
-      "enable" : 1,
-      "model_file" : "/opt/zero_mini/yolov8/yolov8_new_rpn.om"
-   }
-}

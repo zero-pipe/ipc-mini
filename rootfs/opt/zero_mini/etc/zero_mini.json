@@ -1,0 +1,89 @@
+{
+  "sensor": {
+    "name": "SC4336P",
+    "lane_mode": 0,
+    "width": 2560,
+    "height": 1440,
+    "fps": 30,
+    "wdr": 0
+  },
+  "audio": {
+    "enable": true,
+    "microphone": true,
+    "codec": "G711U"
+  },
+  "streams": {
+    "main": {
+      "enable": true,
+      "start": "boot",
+      "encoder": {
+        "mode": "H264_CBR",
+        "width": 1280,
+        "height": 720,
+        "fps": 15,
+        "bitrate_kbps": 800,
+        "svc": false
+      },
+      "osd": {
+        "enable": true,
+        "x": 32,
+        "y": 32,
+        "font_size": 32
+      }
+    },
+    "sub": {
+      "enable": true,
+      "start": "on_demand",
+      "encoder": {
+        "mode": "inherit",
+        "width": 720,
+        "height": 480,
+        "fps": 15,
+        "bitrate_kbps": 1000
+      },
+      "osd": {
+        "enable": true,
+        "x": 32,
+        "y": 32,
+        "font_size": 32
+      }
+    },
+    "ai": {
+      "enable": true,
+      "start": "on_demand",
+      "engine": "yolov8",
+      "model": "yolov8/yolov8_new_rpn.om",
+      "acl": "yolov8/acl.json",
+      "width": 640,
+      "height": 640,
+      "fps": 1,
+      "idle_stop_sec": 5
+    }
+  },
+  "record": {
+    "enable": false,
+    "file": "/mnt/test.mp4"
+  },
+  "webrtc": {
+    "enable": true,
+    "signaling_url": "ws://114.55.94.148:8089/ws",
+    "signaling_token": "",
+    "room": "door-1",
+    "preview": "sub",
+    "send_detections": true,
+    "disable_twcc": true,
+    "rolling_buffer_sec": 1,
+    "expected_bitrate_kbps": 500,
+    "max_viewers": 3,
+    "ice_servers": [
+      {
+        "urls": "stun:114.55.94.148:3478"
+      },
+      {
+        "urls": "turn:114.55.94.148:3478?transport=udp",
+        "username": "zeromini",
+        "credential": "cqw881013"
+      }
+    ]
+  }
+}

@@ -28,6 +28,17 @@ namespace hisilicon{namespace dev{
         int32_t font_size{32};
     };
 
+    struct venc_encode_options
+    {
+        bool enable{true};
+        int32_t width{1280};
+        int32_t height{720};
+        int32_t frame_rate{15};
+        int32_t bitrate_kbps{800};
+        int32_t svc_enable{0};
+        time_osd_options osd;
+    };
+
     class chn 
         :public zero_ipc::util::stream_observer
          ,public std::enable_shared_from_this<chn>
@@ -38,6 +49,8 @@ namespace hisilicon{namespace dev{
 
             bool start(int32_t venc_w,int32_t venc_h,int32_t fr,int32_t bitrate,
                        int32_t svc_enable,const time_osd_options& time_osd);
+            bool start(const venc_encode_options& main,
+                       const venc_encode_options& sub);
             void stop();
             bool is_start();
             bool set_sub_stream_enabled(bool enable);
@@ -65,7 +78,8 @@ namespace hisilicon{namespace dev{
             std::shared_ptr<vi> m_vi_ptr;
             std::shared_ptr<venc> m_venc_main_ptr;
             std::shared_ptr<venc> m_venc_sub_ptr;
-            std::shared_ptr<osd_date> m_time_osd;
+            std::shared_ptr<osd_date> m_time_osd_main;
+            std::shared_ptr<osd_date> m_time_osd_sub;
             int32_t m_chn;
             std::string m_venc_mode;
             bool m_sub_stream_running{false};
