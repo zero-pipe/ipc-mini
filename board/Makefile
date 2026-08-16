@@ -51,15 +51,18 @@ LOCAL_CXX := \
 	src/media/gop_cache.cpp \
 	src/media/media_source.cpp \
 	src/media/detection_hub.cpp \
-	src/core/protocol_poller.cpp \
 	src/core/application.cpp \
 	protocol/webrtc/ws_client.cpp \
 	protocol/webrtc/signaling_client.cpp \
-	protocol/webrtc/signaling_message_codec.cpp \
-	protocol/webrtc/kvs_peer_session.cpp \
+	protocol/webrtc/signaling_json.cpp \
+	protocol/webrtc/webrtc_peer_connection.cpp \
+	protocol/webrtc/webrtc_runtime.cpp \
+	protocol/webrtc/webrtc_signaling.cpp \
+	protocol/webrtc/webrtc_session.cpp \
+	protocol/webrtc/webrtc_media.cpp \
 	protocol/webrtc/webrtc_plugin.cpp \
-	device_adapter/src/encoded_frame_adapter.cpp \
-	device_adapter/src/ai_stream_bridge.cpp \
+	device_adapter/src/encoded_frame.cpp \
+	device_adapter/src/ai_stream_publisher.cpp \
 	device_adapter/src/encoded_stream_channel.cpp \
 	device_adapter/src/hisilicon_pipeline.cpp \
 	3rdpart/jsoncpp/json_reader.cpp \

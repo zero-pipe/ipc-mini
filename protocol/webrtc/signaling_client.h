@@ -31,9 +31,6 @@ public:
 
     bool start();
     void stop();
-    bool send_raw(const std::string& json);
-    bool send_join();
-    bool send_offer(const std::string& sdp, const std::string& to);
     bool send_answer(const std::string& sdp, const std::string& to);
     bool send_candidate(const std::string& candidate, const std::string& sdp_mid,
                         int sdp_mline_index, const std::string& to);
@@ -43,6 +40,8 @@ public:
     bool connected() const { return ws_.connected(); }
 
 private:
+    bool send_raw(const std::string& json);
+    bool send_join();
     static uint64_t reconnect_timer_cb(void* user);
     void on_message(const std::string& text);
     void on_ws_state(bool connected);

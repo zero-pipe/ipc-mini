@@ -1,4 +1,4 @@
-#include "ai_stream_bridge.h"
+#include "ai_stream_publisher.h"
 
 #include <algorithm>
 
@@ -31,13 +31,13 @@ media::FrameKind h264_kind(const zero_ipc::util::stream_head& head)
 
 } // namespace
 
-AiStreamBridge::AiStreamBridge(
+AiStreamPublisher::AiStreamPublisher(
     std::shared_ptr<media::MediaSource> media_source)
     : media_source_(std::move(media_source))
 {
 }
 
-bool AiStreamBridge::register_track(int width, int height, int frame_rate)
+bool AiStreamPublisher::register_track(int width, int height, int frame_rate)
 {
     if (!media_source_ || width <= 0 || height <= 0 || frame_rate <= 0) {
         return false;
@@ -54,7 +54,7 @@ bool AiStreamBridge::register_track(int width, int height, int frame_rate)
     return true;
 }
 
-void AiStreamBridge::on_stream_come(
+void AiStreamPublisher::on_stream_come(
     zero_ipc::util::stream_obj_ptr stream,
     zero_ipc::util::stream_head* head,
     const char*, int32_t)
@@ -92,7 +92,7 @@ void AiStreamBridge::on_stream_come(
     }
 }
 
-void AiStreamBridge::on_stream_error(
+void AiStreamPublisher::on_stream_error(
     zero_ipc::util::stream_obj_ptr, int32_t)
 {
 }

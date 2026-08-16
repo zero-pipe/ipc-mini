@@ -16,14 +16,13 @@
 namespace zero_mini::webrtc_net {
 
 struct IceServerConfig {
-    std::string urls; // e.g. stun:x:3478 or turn:x:3478?transport=udp
+    std::string urls;  // stun:host:3478  or  turn:host:3478?transport=udp
     std::string username;
     std::string credential;
 };
 
-struct PeerSessionConfig {
+struct PeerConnectionConfig {
     std::vector<IceServerConfig> ice_servers;
-    int preview_stream_id{1};
     int rolling_buffer_duration_sec{1};
     int expected_bitrate_bps{1000 * 1000};
     bool disable_twcc{true};
@@ -32,11 +31,11 @@ struct PeerSessionConfig {
 };
 
 /**
- * Thin wrapper around Amazon KVS WebRTC C PeerConnection.
- * Compile with -DZERO_MINI_ENABLE_KVS=1 and link kvsWebrtcClient.
+ * One WebRTC PeerConnection (SDP / ICE / RTP / DataChannel).
+ * Media stack is Amazon KVS WebRTC when built with ZERO_MINI_ENABLE_KVS=1.
  * Without KVS, methods return false / no-op so signaling bring-up still builds.
  */
-class KvsPeerSession final {
+class WebRtcPeerConnection final {
 public:
     using LocalCandidateHandler =
         std::function<void(const std::string& candidate_json)>;
@@ -47,8 +46,8 @@ public:
     using RemoteAudioHandler =
         std::function<void(const uint8_t* data, size_t len)>;
 
-    explicit KvsPeerSession(PeerSessionConfig config);
-    ~KvsPeerSession();
+    explicit WebRtcPeerConnection(PeerConnectionConfig config);
+    ~WebRtcPeerConnection();
 
     bool start();
     /** Disable sends/callbacks before handing blocking destruction to reaper. */
@@ -76,15 +75,15 @@ public:
 private:
     class CallbackGuard {
     public:
-        explicit CallbackGuard(KvsPeerSession* owner);
+        explicit CallbackGuard(WebRtcPeerConnection* owner);
         ~CallbackGuard();
     private:
-        KvsPeerSession* owner_;
+        WebRtcPeerConnection* owner_;
     };
 
     void wait_for_callbacks();
 
-    PeerSessionConfig config_;
+    PeerConnectionConfig config_;
     std::mutex mutex_;
     std::mutex callback_mutex_;
     std::condition_variable callback_cv_;

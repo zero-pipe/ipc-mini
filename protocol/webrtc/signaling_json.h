@@ -6,9 +6,8 @@
 namespace zero_mini::webrtc_net {
 
 /**
- * Shared JSON boundary for signaling and KVS callback messages.
- * The wire format remains unchanged; this only centralizes escaping and
- * typed field validation.
+ * JSON helpers for signaling wire text and PeerConnection callback payloads.
+ * Not a protocol codec — join/answer encoding stays in SignalingClient.
  */
 std::string json_escape_string(const std::string& value);
 

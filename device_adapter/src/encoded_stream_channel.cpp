@@ -82,10 +82,10 @@ bool EncodedStreamChannel::register_video_tracks(
         media::StreamTrack track;
         track.stream_id = stream;
         track.type = media::MediaType::Video;
-        track.codec = video_codec;
-        track.width = stream == MAIN_STREAM_ID ? width : 720;
-        track.height = stream == MAIN_STREAM_ID ? height : 480;
-        track.frame_rate = frame_rate;
+        track.video.codec = video_codec;
+        track.video.width = stream == MAIN_STREAM_ID ? width : 720;
+        track.video.height = stream == MAIN_STREAM_ID ? height : 480;
+        track.video.frame_rate = frame_rate;
         track.clock_rate = 90000;
         media_source_->set_track(std::move(track));
     }
@@ -106,10 +106,10 @@ bool EncodedStreamChannel::register_audio_tracks(
         media::StreamTrack track;
         track.stream_id = stream;
         track.type = media::MediaType::Audio;
-        track.codec = audio_codec;
-        track.sample_rate = sample_rate;
-        track.channels = channels;
-        track.bits_per_sample = bits_per_sample;
+        track.audio.codec = audio_codec;
+        track.audio.sample_rate = sample_rate;
+        track.audio.channels = channels;
+        track.audio.bits_per_sample = bits_per_sample;
         track.clock_rate = sample_rate;
         media_source_->set_track(std::move(track));
     }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "encoded_frame_adapter.h"
+#include "encoded_frame.h"
 #include "media/media_source.h"
 #include <memory>
 #include <string>

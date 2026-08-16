@@ -1,4 +1,4 @@
-#include "kvs_peer_session.h"
+#include "webrtc_peer_connection.h"
 
 #include <atomic>
 #include <cstdio>
@@ -21,17 +21,17 @@ bool kvs_runtime_available()
 #endif
 }
 
-KvsPeerSession::KvsPeerSession(PeerSessionConfig config)
+WebRtcPeerConnection::WebRtcPeerConnection(PeerConnectionConfig config)
     : config_(std::move(config))
 {
 }
 
-KvsPeerSession::~KvsPeerSession()
+WebRtcPeerConnection::~WebRtcPeerConnection()
 {
     stop();
 }
 
-KvsPeerSession::CallbackGuard::CallbackGuard(KvsPeerSession* owner)
+WebRtcPeerConnection::CallbackGuard::CallbackGuard(WebRtcPeerConnection* owner)
     : owner_(owner)
 {
     if (owner_) {
@@ -40,7 +40,7 @@ KvsPeerSession::CallbackGuard::CallbackGuard(KvsPeerSession* owner)
     }
 }
 
-KvsPeerSession::CallbackGuard::~CallbackGuard()
+WebRtcPeerConnection::CallbackGuard::~CallbackGuard()
 {
     if (!owner_) {
         return;
@@ -54,37 +54,37 @@ KvsPeerSession::CallbackGuard::~CallbackGuard()
     owner_->callback_cv_.notify_all();
 }
 
-void KvsPeerSession::wait_for_callbacks()
+void WebRtcPeerConnection::wait_for_callbacks()
 {
     std::unique_lock lock(callback_mutex_);
     callback_cv_.wait(lock, [this] { return callbacks_inflight_ == 0; });
 }
 
-void KvsPeerSession::set_local_candidate_handler(LocalCandidateHandler handler)
+void WebRtcPeerConnection::set_local_candidate_handler(LocalCandidateHandler handler)
 {
     std::lock_guard lock(mutex_);
     on_candidate_ = std::move(handler);
 }
 
-void KvsPeerSession::set_local_sdp_handler(LocalSdpHandler handler)
+void WebRtcPeerConnection::set_local_sdp_handler(LocalSdpHandler handler)
 {
     std::lock_guard lock(mutex_);
     on_sdp_ = std::move(handler);
 }
 
-void KvsPeerSession::set_keyframe_handler(KeyframeHandler handler)
+void WebRtcPeerConnection::set_keyframe_handler(KeyframeHandler handler)
 {
     std::lock_guard lock(mutex_);
     on_keyframe_ = std::move(handler);
 }
 
-void KvsPeerSession::set_state_handler(StateHandler handler)
+void WebRtcPeerConnection::set_state_handler(StateHandler handler)
 {
     std::lock_guard lock(mutex_);
     on_state_ = std::move(handler);
 }
 
-void KvsPeerSession::set_remote_audio_handler(RemoteAudioHandler handler)
+void WebRtcPeerConnection::set_remote_audio_handler(RemoteAudioHandler handler)
 {
     std::lock_guard lock(mutex_);
     on_remote_audio_ = std::move(handler);
@@ -92,7 +92,7 @@ void KvsPeerSession::set_remote_audio_handler(RemoteAudioHandler handler)
 
 #if defined(ZERO_MINI_ENABLE_KVS) && ZERO_MINI_ENABLE_KVS
 
-bool KvsPeerSession::start()
+bool WebRtcPeerConnection::start()
 {
     std::lock_guard lock(mutex_);
     if (started_) {
@@ -147,11 +147,11 @@ bool KvsPeerSession::start()
     peerConnectionOnIceCandidate(
         pc, reinterpret_cast<UINT64>(this),
         [](UINT64 custom, PCHAR candidateJson) {
-            auto* self = reinterpret_cast<KvsPeerSession*>(custom);
+            auto* self = reinterpret_cast<WebRtcPeerConnection*>(custom);
             if (!self) {
                 return;
             }
-            KvsPeerSession::CallbackGuard guard(self);
+            WebRtcPeerConnection::CallbackGuard guard(self);
             static std::atomic<unsigned> ice_n{0};
             // NULL means gathering complete (KVS convention).
             if (!candidateJson) {
@@ -173,11 +173,11 @@ bool KvsPeerSession::start()
     peerConnectionOnConnectionStateChange(
         pc, reinterpret_cast<UINT64>(this),
         [](UINT64 custom, RTC_PEER_CONNECTION_STATE state) {
-            auto* self = reinterpret_cast<KvsPeerSession*>(custom);
+            auto* self = reinterpret_cast<WebRtcPeerConnection*>(custom);
             if (!self) {
                 return;
             }
-            KvsPeerSession::CallbackGuard guard(self);
+            WebRtcPeerConnection::CallbackGuard guard(self);
             const char* name = "unknown";
             switch (state) {
             case RTC_PEER_CONNECTION_STATE_NEW: name = "new"; break;
@@ -234,11 +234,11 @@ bool KvsPeerSession::start()
     transceiverOnPictureLoss(
         xcvr, reinterpret_cast<UINT64>(this),
         [](UINT64 custom) {
-            auto* self = reinterpret_cast<KvsPeerSession*>(custom);
+            auto* self = reinterpret_cast<WebRtcPeerConnection*>(custom);
             if (!self) {
                 return;
             }
-            KvsPeerSession::CallbackGuard guard(self);
+            WebRtcPeerConnection::CallbackGuard guard(self);
             KeyframeHandler handler;
             {
                 std::lock_guard lk(self->mutex_);
@@ -267,11 +267,11 @@ bool KvsPeerSession::start()
     transceiverOnFrame(
         audio_xcvr, reinterpret_cast<UINT64>(this),
         [](UINT64 custom, PFrame frame) {
-            auto* self = reinterpret_cast<KvsPeerSession*>(custom);
+            auto* self = reinterpret_cast<WebRtcPeerConnection*>(custom);
             if (!self || !frame || !frame->frameData || frame->size == 0) {
                 return;
             }
-            KvsPeerSession::CallbackGuard guard(self);
+            WebRtcPeerConnection::CallbackGuard guard(self);
             RemoteAudioHandler handler;
             {
                 std::lock_guard lk(self->mutex_);
@@ -295,11 +295,11 @@ bool KvsPeerSession::start()
         peerConnectionOnDataChannel(
             pc, reinterpret_cast<UINT64>(this),
             [](UINT64 custom, PRtcDataChannel dc) {
-                auto* self = reinterpret_cast<KvsPeerSession*>(custom);
+                auto* self = reinterpret_cast<WebRtcPeerConnection*>(custom);
                 if (!self || !dc) {
                     return;
                 }
-                KvsPeerSession::CallbackGuard guard(self);
+                WebRtcPeerConnection::CallbackGuard guard(self);
                 {
                     std::lock_guard lock(self->mutex_);
                     self->data_channel_ = dc;
@@ -312,9 +312,9 @@ bool KvsPeerSession::start()
                 dataChannelOnOpen(dc, custom,
                                   [](UINT64 c, PRtcDataChannel) {
                                       auto* s =
-                                          reinterpret_cast<KvsPeerSession*>(c);
+                                          reinterpret_cast<WebRtcPeerConnection*>(c);
                                       if (s) {
-                                          KvsPeerSession::CallbackGuard guard(s);
+                                          WebRtcPeerConnection::CallbackGuard guard(s);
                                           std::lock_guard lock(s->mutex_);
                                           if (s->peer_connection_) {
                                               s->dc_open_ = true;
@@ -333,7 +333,7 @@ bool KvsPeerSession::start()
     return true;
 }
 
-void KvsPeerSession::deactivate()
+void WebRtcPeerConnection::deactivate()
 {
     std::lock_guard lock(mutex_);
     media_ready_ = false;
@@ -345,7 +345,7 @@ void KvsPeerSession::deactivate()
     on_remote_audio_ = nullptr;
 }
 
-void KvsPeerSession::stop()
+void WebRtcPeerConnection::stop()
 {
     // Never hold mutex_ across close/free — ICE/SCTP workers may callback.
     // Do NOT call deinitKvsWebRtc() here: it blocks indefinitely on this board
@@ -383,7 +383,7 @@ void KvsPeerSession::stop()
     std::fprintf(stderr, "[kvs] peer connection released\n");
 }
 
-bool KvsPeerSession::handle_remote_offer(const std::string& sdp)
+bool WebRtcPeerConnection::handle_remote_offer(const std::string& sdp)
 {
     // Do NOT hold mutex_ across KVS SDP/ICE APIs: setLocalDescription starts
     // gathering and may invoke onIceCandidate on the same thread. Taking
@@ -436,7 +436,7 @@ bool KvsPeerSession::handle_remote_offer(const std::string& sdp)
     return true;
 }
 
-bool KvsPeerSession::handle_remote_answer(const std::string& sdp)
+bool WebRtcPeerConnection::handle_remote_answer(const std::string& sdp)
 {
     PRtcPeerConnection pc = nullptr;
     {
@@ -452,7 +452,7 @@ bool KvsPeerSession::handle_remote_answer(const std::string& sdp)
     return STATUS_SUCCEEDED(setRemoteDescription(pc, &remote));
 }
 
-bool KvsPeerSession::handle_remote_candidate(const std::string& candidate,
+bool WebRtcPeerConnection::handle_remote_candidate(const std::string& candidate,
                                              const std::string& sdp_mid,
                                              int sdp_mline_index)
 {
@@ -471,7 +471,7 @@ bool KvsPeerSession::handle_remote_candidate(const std::string& candidate,
     return STATUS_SUCCEEDED(addIceCandidate(pc, ice.candidate));
 }
 
-bool KvsPeerSession::write_video_frame(
+bool WebRtcPeerConnection::write_video_frame(
     const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame)
 {
     if (!frame || !media_ready_.load() || !video_transceiver_) {
@@ -507,7 +507,7 @@ bool KvsPeerSession::write_video_frame(
     return false;
 }
 
-bool KvsPeerSession::write_audio_frame(
+bool WebRtcPeerConnection::write_audio_frame(
     const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame)
 {
     if (!frame || frame->type() != zero_ipc::media::MediaType::Audio ||
@@ -554,7 +554,7 @@ bool KvsPeerSession::write_audio_frame(
     return false;
 }
 
-bool KvsPeerSession::send_detections(
+bool WebRtcPeerConnection::send_detections(
     const zero_ipc::media::DetectionFrame& detections)
 {
     PRtcDataChannel dc = nullptr;
@@ -623,16 +623,16 @@ bool KvsPeerSession::send_detections(
 
 #else // !ZERO_MINI_ENABLE_KVS
 
-bool KvsPeerSession::start()
+bool WebRtcPeerConnection::start()
 {
     std::fprintf(stderr,
-                 "[kvs] stub session started (build with ZERO_MINI_ENABLE_KVS=1 "
+                 "[kvs] stub peer connection started (build with ZERO_MINI_ENABLE_KVS=1 "
                  "after cross-compiling amazon-kinesis-video-streams-webrtc-sdk-c)\n");
     started_ = true;
     return true;
 }
 
-void KvsPeerSession::deactivate()
+void WebRtcPeerConnection::deactivate()
 {
     media_ready_ = false;
     dc_open_ = false;
@@ -644,7 +644,7 @@ void KvsPeerSession::deactivate()
     on_remote_audio_ = nullptr;
 }
 
-void KvsPeerSession::stop()
+void WebRtcPeerConnection::stop()
 {
     deactivate();
     wait_for_callbacks();
@@ -653,7 +653,7 @@ void KvsPeerSession::stop()
     started_ = false;
 }
 
-bool KvsPeerSession::handle_remote_offer(const std::string& sdp)
+bool WebRtcPeerConnection::handle_remote_offer(const std::string& sdp)
 {
     std::fprintf(stderr, "[kvs] stub got offer (%zu bytes) — KVS not linked\n",
                  sdp.size());
@@ -668,30 +668,30 @@ bool KvsPeerSession::handle_remote_offer(const std::string& sdp)
     return false;
 }
 
-bool KvsPeerSession::handle_remote_answer(const std::string&)
+bool WebRtcPeerConnection::handle_remote_answer(const std::string&)
 {
     return false;
 }
 
-bool KvsPeerSession::handle_remote_candidate(const std::string&,
+bool WebRtcPeerConnection::handle_remote_candidate(const std::string&,
                                              const std::string&, int)
 {
     return false;
 }
 
-bool KvsPeerSession::write_video_frame(
+bool WebRtcPeerConnection::write_video_frame(
     const std::shared_ptr<const zero_ipc::media::MediaFrame>&)
 {
     return false;
 }
 
-bool KvsPeerSession::write_audio_frame(
+bool WebRtcPeerConnection::write_audio_frame(
     const std::shared_ptr<const zero_ipc::media::MediaFrame>&)
 {
     return false;
 }
 
-bool KvsPeerSession::send_detections(const zero_ipc::media::DetectionFrame&)
+bool WebRtcPeerConnection::send_detections(const zero_ipc::media::DetectionFrame&)
 {
     return false;
 }

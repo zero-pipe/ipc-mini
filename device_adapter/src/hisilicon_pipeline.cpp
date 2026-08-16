@@ -1,6 +1,6 @@
 #include "hisilicon_pipeline.h"
 
-#include "ai_stream_bridge.h"
+#include "ai_stream_publisher.h"
 #include "dev_osd.h"
 #include "dev_svp.h"
 #include "dev_svp_yolov8.h"
@@ -91,7 +91,7 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
 
     auto fail_cleanup = [this]() {
         stop_yolov8_locked();
-        ai_bridge_.reset();
+        ai_publisher_.reset();
         hisilicon::dev::chn::enable_audio_play(false);
         hisilicon::dev::chn::enable_audio(false, false, nullptr);
         if (svp_inited_) {
@@ -156,8 +156,8 @@ bool HisiliconPipeline::start(const std::shared_ptr<media::MediaSource>& source)
         }
         svp_inited_ = true;
 
-        ai_bridge_ = std::make_shared<AiStreamBridge>(source);
-        if (!ai_bridge_->register_track(
+        ai_publisher_ = std::make_shared<AiStreamPublisher>(source);
+        if (!ai_publisher_->register_track(
                 kAiDefaultWidth, kAiDefaultHeight, kAiDefaultFps)) {
             fail_cleanup();
             return false;
@@ -214,7 +214,7 @@ void HisiliconPipeline::stop()
         std::lock_guard lock(stream_mutex_);
         stop_yolov8_locked();
     }
-    ai_bridge_.reset();
+    ai_publisher_.reset();
 
     hisilicon::dev::chn::start_capture(false);
     hisilicon::dev::chn::enable_audio_play(false);
@@ -268,7 +268,7 @@ bool HisiliconPipeline::set_stream_active(
             return false;
         }
         std::lock_guard lock(stream_mutex_);
-        if (!running_ || !encoded_channel_ || !ai_bridge_) {
+        if (!running_ || !encoded_channel_ || !ai_publisher_) {
             return false;
         }
         /*
@@ -386,7 +386,7 @@ void HisiliconPipeline::ai_lifecycle_worker()
 bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
 {
     std::shared_ptr<EncodedStreamChannel> channel;
-    std::shared_ptr<AiStreamBridge> bridge;
+    std::shared_ptr<AiStreamPublisher> publisher;
     std::shared_ptr<media::DetectionHub> hub;
     std::string model_file;
     int channel_id = 0;
@@ -394,11 +394,11 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
         std::lock_guard lock(stream_mutex_);
         if (ai_worker_stop_ || !ai_stream_required_ ||
             ai_generation_ != generation || yolov8_ || !encoded_channel_ ||
-            !ai_bridge_ || !svp_inited_) {
+            !ai_publisher_ || !svp_inited_) {
             return false;
         }
         channel = encoded_channel_;
-        bridge = ai_bridge_;
+        publisher = ai_publisher_;
         hub = detection_hub_;
         model_file = options_.yolov8_model_file;
         channel_id = options_.channel_id;
@@ -455,9 +455,9 @@ bool HisiliconPipeline::start_yolov8_async(uint64_t generation)
             return false;
         }
         if (width > 0 && height > 0) {
-            bridge->register_track(width, height, kAiDefaultFps);
+            publisher->register_track(width, height, kAiDefaultFps);
         }
-        detector->register_stream_observer(bridge);
+        detector->register_stream_observer(publisher);
         yolov8_ = std::move(detector);
     }
     return true;
@@ -468,8 +468,8 @@ void HisiliconPipeline::stop_yolov8_locked()
     if (!yolov8_) {
         return;
     }
-    if (ai_bridge_) {
-        yolov8_->unregister_stream_observer(ai_bridge_);
+    if (ai_publisher_) {
+        yolov8_->unregister_stream_observer(ai_publisher_);
     }
     yolov8_->stop();
     yolov8_.reset();

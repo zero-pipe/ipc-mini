@@ -33,6 +33,11 @@ struct WebRtcPluginOptions {
 /**
  * Device-side WebRTC Master plugin.
  * One encoded preview stream fan-out to up to N viewer PeerConnections.
+ *
+ * Owns three workers:
+ * - signaling poller: WebSocket / Offer-Answer / session state
+ * - media thread pool (1): drain queues and writeFrame
+ * - cleanup thread pool (1): blocking PeerConnection teardown
  */
 class WebRtcPlugin final : public core::IProtocolPlugin {
 public:

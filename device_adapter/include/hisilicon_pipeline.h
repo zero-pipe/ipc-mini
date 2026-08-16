@@ -17,7 +17,7 @@ class yolov8;
 
 namespace zero_ipc::device_adapter {
 
-class AiStreamBridge;
+class AiStreamPublisher;
 
 struct HisiliconPipelineOptions {
     int32_t sys_flag{0};
@@ -76,7 +76,7 @@ private:
 
     HisiliconPipelineOptions options_;
     std::shared_ptr<EncodedStreamChannel> encoded_channel_;
-    std::shared_ptr<AiStreamBridge> ai_bridge_;
+    std::shared_ptr<AiStreamPublisher> ai_publisher_;
     std::shared_ptr<media::DetectionHub> detection_hub_;
     std::shared_ptr<hisilicon::dev::yolov8> yolov8_;
     std::mutex stream_mutex_;

@@ -5,18 +5,16 @@
 #include <cstddef>
 #include <memory>
 
-struct ztk_poller_pool;
-
 namespace zero_ipc::core {
 
 /**
  * Shared runtime injected into every protocol plugin (DIP / LoD).
- * Plugins talk to MediaSource + DetectionHub + poller_pool only — never HiSilicon SDK.
+ * Plugins talk to MediaSource + DetectionHub only — never HiSilicon SDK.
+ * Each plugin owns its own I/O poller and worker threads.
  */
 struct ProtocolContext {
     std::shared_ptr<media::MediaSource> media_source;
     std::shared_ptr<media::DetectionHub> detections;
-    ztk_poller_pool* poller_pool{nullptr};
     std::size_t output_high_water_bytes{64 * 1024};
     std::size_t pending_frame_bytes_per_session{512 * 1024};
 };

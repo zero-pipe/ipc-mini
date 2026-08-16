@@ -2,7 +2,6 @@
 
 #include "resource_profile.h"
 #include "device_pipeline.h"
-#include "protocol_poller.h"
 #include "protocol_plugin.h"
 #include "media/detection_hub.h"
 #include "media/media_source.h"
@@ -19,9 +18,10 @@ struct ApplicationOptions {
 
 /**
  * Composition root (CRP + LoD).
- * - Owns MediaSource and the shared protocol poller
+ * - Owns MediaSource
  * - Depends on IDevicePipeline / IProtocolPlugin abstractions (DIP)
  * - New protocols: add_protocol() only — Application internals stay closed (OCP)
+ * - Protocol I/O threads are owned by each plugin, not by Application
  */
 class Application final {
 public:
@@ -42,11 +42,9 @@ public:
 private:
     ApplicationOptions options_;
     std::shared_ptr<media::MediaSource> media_;
-    ProtocolPoller protocol_poller_;
     std::unique_ptr<IDevicePipeline> device_;
     std::vector<std::unique_ptr<IProtocolPlugin>> protocols_;
     std::size_t started_protocol_count_{0};
-    bool poller_started_{false};
     bool device_started_{false};
     bool running_{false};
 };

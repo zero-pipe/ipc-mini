@@ -49,30 +49,16 @@ bool Application::start()
         });
     device_->set_detection_hub(detections);
 
-    const bool has_protocols = !protocols_.empty();
-    if (has_protocols) {
-        if (!protocol_poller_.start(options_.profile.poller_count)) {
-            media_.reset();
-            return false;
-        }
-        poller_started_ = true;
-    }
-
     if (!device_->start(media_)) {
-        if (poller_started_) {
-            protocol_poller_.stop();
-            poller_started_ = false;
-        }
         media_.reset();
         return false;
     }
     device_started_ = true;
 
-    if (has_protocols) {
+    if (!protocols_.empty()) {
         ProtocolContext context;
         context.media_source = media_;
         context.detections = detections;
-        context.poller_pool = protocol_poller_.poller_pool();
         context.output_high_water_bytes =
             options_.profile.protocol_output_high_water_bytes;
         context.pending_frame_bytes_per_session =
@@ -80,7 +66,6 @@ bool Application::start()
 
         for (auto& protocol : protocols_) {
             if (!protocol->start(context)) {
-                // A plugin may have allocated resources before reporting failure.
                 protocol->stop();
                 for (std::size_t i = started_protocol_count_; i > 0; --i) {
                     protocols_[i - 1]->stop();
@@ -89,10 +74,6 @@ bool Application::start()
                 if (device_started_) {
                     device_->stop();
                     device_started_ = false;
-                }
-                if (poller_started_) {
-                    protocol_poller_.stop();
-                    poller_started_ = false;
                 }
                 media_.reset();
                 return false;
@@ -114,10 +95,6 @@ void Application::stop()
     if (device_started_ && device_) {
         device_->stop();
         device_started_ = false;
-    }
-    if (poller_started_) {
-        protocol_poller_.stop();
-        poller_started_ = false;
     }
     media_.reset();
     running_ = false;

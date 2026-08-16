@@ -1,5 +1,5 @@
 #include "signaling_client.h"
-#include "signaling_message_codec.h"
+#include "signaling_json.h"
 
 #include <ztk/util/timer.h>
 
@@ -181,17 +181,6 @@ bool SignalingClient::send_join()
         << "\",\"role\":\"" << json_escape_string(config_.role) << "\"";
     if (!config_.client_id.empty()) {
         oss << ",\"clientId\":\"" << json_escape_string(config_.client_id) << "\"";
-    }
-    oss << "}";
-    return send_raw(oss.str());
-}
-
-bool SignalingClient::send_offer(const std::string& sdp, const std::string& to)
-{
-    std::ostringstream oss;
-    oss << "{\"type\":\"offer\",\"sdp\":\"" << json_escape_string(sdp) << "\"";
-    if (!to.empty()) {
-        oss << ",\"to\":\"" << json_escape_string(to) << "\"";
     }
     oss << "}";
     return send_raw(oss.str());

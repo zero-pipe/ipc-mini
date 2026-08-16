@@ -23,6 +23,8 @@ struct EncodedFrameView {
     std::vector<EncodedChunkView> chunks;
 };
 
-std::shared_ptr<media::MediaFrame> copy_encoded_frame(const EncodedFrameView& source);
+/** Deep-copy a non-owning encoder view into a MediaSource frame. */
+std::shared_ptr<media::MediaFrame> copy_encoded_frame(
+    const EncodedFrameView& source);
 
 } // namespace zero_ipc::device_adapter

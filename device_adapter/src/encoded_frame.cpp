@@ -1,4 +1,4 @@
-#include "encoded_frame_adapter.h"
+#include "encoded_frame.h"
 
 #include <cstring>
 #include <limits>
