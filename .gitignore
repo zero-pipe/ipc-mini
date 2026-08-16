@@ -28,6 +28,9 @@ Thumbs.db
 *.swp
 *~
 
+# Cloud recording ingest (device uploads)
+/cloud/signaling/record/
+
 # Local deploy / NFS leftovers / backups
 /nfs/
 *_deploy/

@@ -25,7 +25,13 @@ struct AudioConfig {
 
 struct RecordConfig {
     bool enable{false};
-    std::string file;
+    std::string stream{"main"};
+    int stream_id{0};
+    bool audio{true};
+    int segment_sec{300};
+    std::string directory{"/mnt/record"};
+    std::string upload_url;
+    std::string upload_token;
 };
 
 struct WebRtcIceServerConfig {

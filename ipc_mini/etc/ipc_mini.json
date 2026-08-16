@@ -61,8 +61,13 @@
     }
   },
   "record": {
-    "enable": false,
-    "file": "/mnt/test.mp4"
+    "enable": true,
+    "stream": "main",
+    "audio": true,
+    "segment_sec": 180,
+    "directory": "/mnt/record",
+    "upload_url": "http://114.55.94.148:8089/record/door-1",
+    "upload_token": ""
   },
   "webrtc": {
     "enable": true,

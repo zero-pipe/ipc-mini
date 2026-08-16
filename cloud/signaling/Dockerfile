@@ -2,7 +2,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev
-COPY server.js rooms.js protocol.js http.js ./
+COPY server.js rooms.js protocol.js http.js record_http.js ./
 COPY public ./public
 ENV PORT=8089
 ENV SIGNALING_PATH=/ws

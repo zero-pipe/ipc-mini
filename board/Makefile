@@ -30,6 +30,9 @@ INC_PATH += -I$(ROOT)/board
 INC_PATH += -I$(ROOT)/3rdpart/jsoncpp
 INC_PATH += -I$(ROOT)/3rdpart/freetype-2.7.1/include/freetype2
 INC_PATH += -I$(ROOT)/3rdpart/zero-tool-kit/include
+INC_PATH += -I$(ROOT)/3rdpart/zero-media-kit/libflv/include
+INC_PATH += -I$(ROOT)/3rdpart/zero-media-kit/libmov/include
+INC_PATH += -I$(ROOT)/3rdpart/zero-media-kit/libmov/source
 INC_PATH += -I$(DEVICE)
 INC_PATH += -I$(DEVICE)/support
 INC_PATH += -I$(DEVICE)/sensor/common
@@ -52,6 +55,12 @@ LOCAL_CXX := \
 	src/media/media_source.cpp \
 	src/media/detection_source.cpp \
 	src/core/application.cpp \
+	src/record/duration_segment_policy.cpp \
+	src/record/hls_playlist.cpp \
+	src/record/fmp4_segment_muxer.cpp \
+	src/record/http_segment_uploader.cpp \
+	src/record/segment_recorder.cpp \
+	src/protocol/record_plugin.cpp \
 	protocol/webrtc/ws_client.cpp \
 	protocol/webrtc/signaling_client.cpp \
 	protocol/webrtc/signaling_json.cpp \
@@ -70,6 +79,8 @@ LOCAL_CXX := \
 	3rdpart/jsoncpp/json_writer.cpp
 
 ZTK := 3rdpart/zero-tool-kit/src
+MOV := 3rdpart/zero-media-kit/libmov
+FLV := 3rdpart/zero-media-kit/libflv
 LOCAL_C := \
 	$(ZTK)/core/ztk_errno.c \
 	$(ZTK)/core/ztk.c \
@@ -97,7 +108,14 @@ LOCAL_C := \
 	$(ZTK)/poller/poller_pool.c \
 	$(ZTK)/poller/poller_buf.c \
 	$(ZTK)/poller/poller_epoll.c \
-	$(ZTK)/thread/thread_pool.c
+	$(ZTK)/thread/thread_pool.c \
+	$(wildcard $(MOV)/source/*.c) \
+	$(FLV)/source/mpeg4-avc.c \
+	$(FLV)/source/mpeg4-hevc.c \
+	$(FLV)/source/mpeg4-aac.c \
+	$(FLV)/source/mpeg4-aac-asc.c \
+	$(FLV)/source/mpeg4-annexbtomp4.c \
+	$(FLV)/source/hevc-annexbtomp4.c
 
 DEVICE_CXX := \
 	dev_sys.cpp \

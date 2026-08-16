@@ -413,7 +413,13 @@ bool validate_config(const RuntimeConfig& config, std::string& error)
         (sub.osd.enable &&
          (sub.osd.x < 0 || sub.osd.y < 0 ||
           !positive(sub.osd.font_size))) ||
-        (config.record.enable && config.record.file.empty())) {
+        (config.record.enable &&
+         (config.record.directory.empty() ||
+          config.record.stream_id < 0 || config.record.stream_id > 1 ||
+          config.record.segment_sec < 5 ||
+          config.record.segment_sec > 3600 ||
+          (!config.record.upload_url.empty() &&
+           config.record.upload_url.rfind("http://", 0) != 0)))) {
         error = "configuration contains unsupported mode, URL, stream, or numeric value";
         return false;
     }
@@ -513,8 +519,35 @@ bool load_ipc_mini_json(const std::string& path, RuntimeConfig& config,
         }
         if (!optional_bool(record, "record", "enable", false,
                            config.record.enable, error) ||
-            !optional_string(record, "record", "file", "", config.record.file,
-                             error)) {
+            !optional_string(record, "record", "stream", "main",
+                             config.record.stream, error) ||
+            !optional_bool(record, "record", "audio", true,
+                           config.record.audio, error) ||
+            !optional_int(record, "record", "segment_sec", 300,
+                          config.record.segment_sec, error) ||
+            !optional_string(record, "record", "directory", "/mnt/record",
+                             config.record.directory, error) ||
+            !optional_string(record, "record", "upload_url", "",
+                             config.record.upload_url, error) ||
+            !optional_string(record, "record", "upload_token", "",
+                             config.record.upload_token, error)) {
+            return false;
+        }
+        if (record.isMember("file") && !record.isMember("directory") &&
+            record["file"].isString()) {
+            const std::string file = record["file"].asString();
+            const auto slash = file.find_last_of('/');
+            if (slash != std::string::npos && slash > 0) {
+                config.record.directory = file.substr(0, slash);
+            }
+        }
+        if (record.isMember("dir") && record["dir"].isString() &&
+            !record["dir"].asString().empty()) {
+            config.record.directory = record["dir"].asString();
+        }
+        config.record.stream_id = stream_id_from_name(config.record.stream);
+        if (config.record.enable && config.record.stream_id < 0) {
+            error = "record.stream must be main or sub";
             return false;
         }
     }
@@ -669,10 +702,28 @@ bool load_legacy_files(const std::string& directory, RuntimeConfig& config,
         }
         if (!optional_bool(record, "mp4_save_info.json:mp4_save", "enable",
                            false, config.record.enable, error) ||
-            !optional_string(record, "mp4_save_info.json:mp4_save", "file",
-                             "", config.record.file, error)) {
+            !optional_string(record, "mp4_save_info.json:mp4_save", "stream",
+                             "main", config.record.stream, error) ||
+            !optional_bool(record, "mp4_save_info.json:mp4_save", "audio",
+                           true, config.record.audio, error) ||
+            !optional_int(record, "mp4_save_info.json:mp4_save", "segment_sec",
+                          300, config.record.segment_sec, error) ||
+            !optional_string(record, "mp4_save_info.json:mp4_save", "dir",
+                             "/mnt/record", config.record.directory, error) ||
+            !optional_string(record, "mp4_save_info.json:mp4_save",
+                             "upload_url", "", config.record.upload_url,
+                             error)) {
             return false;
         }
+        if (record.isMember("file") && record["file"].isString() &&
+            !record.isMember("dir")) {
+            const std::string file = record["file"].asString();
+            const auto slash = file.find_last_of('/');
+            if (slash != std::string::npos && slash > 0) {
+                config.record.directory = file.substr(0, slash);
+            }
+        }
+        config.record.stream_id = stream_id_from_name(config.record.stream);
     }
 
     return validate_config(config, error);

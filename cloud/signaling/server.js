@@ -7,6 +7,7 @@
  *   rooms.js     room table (1 master + N viewers)
  *   protocol.js  join / offer / answer / candidate / leave / ping
  *   http.js      /healthz + viewer page
+ *   record_http.js  PUT/GET /record/* (CMAF + HLS)
  *
  * Wire schema is stable. Device and viewer.html depend on it.
  */
@@ -44,6 +45,7 @@ function loadConfig() {
     token,
     environment,
     publicDir: path.join(__dirname, "public"),
+    recordDir: process.env.RECORD_DIR || path.join(__dirname, "record"),
   };
 }
 
@@ -72,7 +74,12 @@ function log(...args) {
 
 const config = loadConfig();
 const rooms = new SignalingRooms({ maxViewers: config.maxViewers, log });
-const server = createHttpServer({ publicDir: config.publicDir, rooms });
+const server = createHttpServer({
+  publicDir: config.publicDir,
+  rooms,
+  recordDir: config.recordDir,
+  recordToken: config.token,
+});
 const wss = new WebSocketServer({
   server,
   path: config.wsPath,
@@ -146,5 +153,6 @@ server.listen(config.port, () => {
     `maxViewers=${config.maxViewers}`,
     `token=${config.token ? "on" : "off"}`,
     `env=${config.environment}`,
+    `record=${config.recordDir}`,
   );
 });

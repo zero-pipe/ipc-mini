@@ -6,6 +6,7 @@
 #include "core/resource_profile.h"
 #include "config/runtime_config.h"
 #include "hisilicon_pipeline.h"
+#include "protocol/record_plugin.h"
 #include "protocol/webrtc_plugin.h"
 
 #include <atomic>
@@ -249,16 +250,33 @@ int main(int argc, char** argv)
         app.add_protocol(std::make_unique<protocol::WebRtcPlugin>(
             command_line.webrtc));
     }
+    if (runtime_config.record.enable) {
+        record::RecordConfig record;
+        record.enabled = true;
+        record.stream_id = runtime_config.record.stream_id;
+        record.audio = runtime_config.record.audio &&
+            runtime_config.audio.enable;
+        record.segment_sec = runtime_config.record.segment_sec;
+        record.directory = runtime_config.record.directory;
+        record.upload_url = runtime_config.record.upload_url;
+        record.upload_token = runtime_config.record.upload_token.empty()
+            ? runtime_config.webrtc.signaling_token
+            : runtime_config.record.upload_token;
+        app.add_protocol(std::make_unique<protocol::RecordPlugin>(
+            std::move(record)));
+    }
 
     std::printf("[ipc_mini] streams %s\n",
                 config::format_streams_summary(runtime_config).c_str());
     if (runtime_config.record.enable) {
-        std::fprintf(stderr,
-                     "[ipc_mini] record file=%s (config loaded; muxer not wired yet)\n",
-                     runtime_config.record.file.c_str());
-    } else if (!runtime_config.record.file.empty()) {
-        std::printf("[ipc_mini] record off file=%s\n",
-                    runtime_config.record.file.c_str());
+        std::printf("[ipc_mini] record on stream=%s segment=%ds dir=%s%s\n",
+                    runtime_config.record.stream.c_str(),
+                    runtime_config.record.segment_sec,
+                    runtime_config.record.directory.c_str(),
+                    runtime_config.record.upload_url.empty()
+                        ? ""
+                        : (" upload=" + runtime_config.record.upload_url)
+                              .c_str());
     }
     std::printf(
         "[ipc_mini] starting sensor=%s webrtc=%s preview=%s room=%s\n",

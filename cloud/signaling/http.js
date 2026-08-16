@@ -4,6 +4,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
+const { handleRecordRequest } = require("./record_http");
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
@@ -13,9 +15,13 @@ const MIME = {
   ".ico": "image/x-icon",
 };
 
-function createHttpServer({ publicDir, rooms }) {
+function createHttpServer({ publicDir, rooms, recordDir, recordToken }) {
   return http.createServer((req, res) => {
     const url = new URL(req.url || "/", "http://localhost");
+    if (url.pathname === "/record" || url.pathname.startsWith("/record/")) {
+      handleRecordRequest(req, res, { recordDir, token: recordToken });
+      return;
+    }
     if (req.method !== "GET" && req.method !== "HEAD") {
       res.writeHead(405, { allow: "GET, HEAD" });
       res.end("method not allowed");

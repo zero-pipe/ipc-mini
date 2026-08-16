@@ -18,8 +18,10 @@ services:
     volumes:
       - ../signaling:/app
       - /app/node_modules
+      - ../signaling/record:/data/record
     environment:
       PORT: "8089"
       SIGNALING_PATH: "/ws"
       MAX_VIEWERS: "3"
+      RECORD_DIR: "/data/record"
       # SIGNALING_TOKEN: "replace_me"
