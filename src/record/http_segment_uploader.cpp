@@ -277,9 +277,14 @@ void HttpSegmentUploader::stop()
 {
     stopping_.store(true);
     cv_.notify_all();
-    if (worker_.joinable()) {
-        worker_.join();
+    if (!worker_.joinable()) {
+        return;
     }
+    std::printf("[record] waiting for upload thread\n");
+    std::fflush(stdout);
+    worker_.join();
+    std::printf("[record] upload thread done\n");
+    std::fflush(stdout);
 }
 
 void HttpSegmentUploader::worker_loop()
@@ -301,9 +306,13 @@ void HttpSegmentUploader::worker_loop()
             queue_.pop_front();
         }
         bool ok = false;
-        for (int attempt = 1; attempt <= kMaxRetries; ++attempt) {
+        const int retries = stopping_.load() ? 1 : kMaxRetries;
+        for (int attempt = 1; attempt <= retries; ++attempt) {
             ok = item.remove ? delete_object(item) : put_file(item);
             if (ok) {
+                break;
+            }
+            if (stopping_.load()) {
                 break;
             }
             std::fprintf(stderr, "[record] %s retry %d/%d %s\n",

@@ -34,6 +34,14 @@ public:
     void add_protocol(std::unique_ptr<IProtocolPlugin> protocol);
 
     bool start();
+    /**
+     * Shutdown:
+     *   1. stop_media()  — stop encode/record, wait leftover PUTs, release MPP
+     *   2. stop_network() — WebRTC/KVS (may block; caller may watchdog this)
+     * stop() runs both, for destructor.
+     */
+    void stop_media();
+    void stop_network();
     void stop();
 
     const ResourceProfile& profile() const noexcept { return options_.profile; }

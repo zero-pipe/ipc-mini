@@ -29,6 +29,8 @@ public:
 
     virtual bool start(const ProtocolContext& context) = 0;
     virtual void stop() = 0;
+    /** KVS / usrsctp teardown can block; run it after MPP release. */
+    virtual bool stop_after_device() const { return false; }
 };
 
 } // namespace ipc_mini::core

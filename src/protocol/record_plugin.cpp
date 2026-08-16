@@ -67,6 +67,7 @@ void RecordPlugin::stop()
     }
     recorder_->stop();
     recorder_.reset();
+    std::printf("[record] stopped\n");
 }
 
 } // namespace ipc_mini::protocol

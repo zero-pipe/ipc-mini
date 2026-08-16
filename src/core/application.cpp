@@ -87,18 +87,35 @@ bool Application::start()
     return true;
 }
 
-void Application::stop()
+void Application::stop_media()
 {
     for (std::size_t i = started_protocol_count_; i > 0; --i) {
-        protocols_[i - 1]->stop();
+        if (!protocols_[i - 1]->stop_after_device()) {
+            protocols_[i - 1]->stop();
+        }
     }
-    started_protocol_count_ = 0;
     if (device_started_ && device_) {
         device_->stop();
         device_started_ = false;
     }
+}
+
+void Application::stop_network()
+{
+    for (std::size_t i = started_protocol_count_; i > 0; --i) {
+        if (protocols_[i - 1]->stop_after_device()) {
+            protocols_[i - 1]->stop();
+        }
+    }
+    started_protocol_count_ = 0;
     media_.reset();
     running_ = false;
+}
+
+void Application::stop()
+{
+    stop_media();
+    stop_network();
 }
 
 } // namespace ipc_mini::core

@@ -306,20 +306,23 @@ int main(int argc, char** argv)
         });
     }
 
-    std::printf("[ipc_mini] stopping...\n");
+    std::printf("[ipc_mini] stopping capture/record (wait upload)...\n");
     std::fflush(stdout);
+    app.stop_media();
 
-    // KVS freePeerConnection / usrsctp can block forever on this platform.
-    // Hard-exit if graceful teardown exceeds the budget so Ctrl+C always works.
+    // KVS freePeerConnection / usrsctp can block forever. Only this phase
+    // is under the short hammer — upload and MPP have already finished.
     std::thread([] {
         std::this_thread::sleep_for(std::chrono::seconds(3));
         std::fprintf(stderr,
-                     "[ipc_mini] stop watchdog fired — forcing exit\n");
+                     "[ipc_mini] webrtc stop watchdog fired — forcing exit\n");
         std::fflush(stderr);
         _exit(1);
     }).detach();
 
-    app.stop();
+    std::printf("[ipc_mini] tearing down webrtc...\n");
+    std::fflush(stdout);
+    app.stop_network();
     std::printf("[ipc_mini] bye\n");
     std::fflush(stdout);
     return 0;

@@ -45,6 +45,7 @@ public:
 
     bool start(const core::ProtocolContext& context) override;
     void stop() override;
+    bool stop_after_device() const override { return true; }
 
 private:
     struct Impl;

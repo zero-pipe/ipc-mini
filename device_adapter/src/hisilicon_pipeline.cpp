@@ -245,6 +245,7 @@ void HisiliconPipeline::stop()
         hisilicon::dev::chn::release();
         sys_inited_ = false;
     }
+    std::printf("[hisi] mpp released\n");
 }
 
 bool HisiliconPipeline::request_keyframe(int channel_id, int stream_id)

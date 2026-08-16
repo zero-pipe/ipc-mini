@@ -79,6 +79,7 @@ void WebRtcPlugin::stop()
     if (!impl_->running.exchange(false)) {
         return;
     }
+    std::fprintf(stderr, "[webrtc] stopping\n");
 
     std::shared_ptr<ipc_mini::webrtc_net::SignalingClient> signaling;
     {

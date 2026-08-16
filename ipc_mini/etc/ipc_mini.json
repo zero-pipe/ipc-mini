@@ -61,7 +61,7 @@
     }
   },
   "record": {
-    "enable": true,
+    "enable": false,
     "stream": "main",
     "audio": true,
     "segment_sec": 180,
