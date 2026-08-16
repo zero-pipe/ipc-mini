@@ -51,7 +51,7 @@ LOCAL_CXX := \
 	src/media/gop_cache.cpp \
 	src/media/media_source.cpp \
 	src/media/detection_hub.cpp \
-	src/core/poller_runtime.cpp \
+	src/core/protocol_poller.cpp \
 	src/core/application.cpp \
 	protocol/webrtc/ws_client.cpp \
 	protocol/webrtc/signaling_client.cpp \

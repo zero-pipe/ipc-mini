@@ -51,7 +51,7 @@ bool Application::start()
 
     const bool has_protocols = !protocols_.empty();
     if (has_protocols) {
-        if (!poller_runtime_.start(options_.profile.poller_count)) {
+        if (!protocol_poller_.start(options_.profile.poller_count)) {
             media_.reset();
             return false;
         }
@@ -60,7 +60,7 @@ bool Application::start()
 
     if (!device_->start(media_)) {
         if (poller_started_) {
-            poller_runtime_.stop();
+            protocol_poller_.stop();
             poller_started_ = false;
         }
         media_.reset();
@@ -72,7 +72,7 @@ bool Application::start()
         ProtocolContext context;
         context.media_source = media_;
         context.detections = detections;
-        context.poller_pool = poller_runtime_.poller_pool();
+        context.poller_pool = protocol_poller_.poller_pool();
         context.output_high_water_bytes =
             options_.profile.protocol_output_high_water_bytes;
         context.pending_frame_bytes_per_session =
@@ -91,7 +91,7 @@ bool Application::start()
                     device_started_ = false;
                 }
                 if (poller_started_) {
-                    poller_runtime_.stop();
+                    protocol_poller_.stop();
                     poller_started_ = false;
                 }
                 media_.reset();
@@ -116,7 +116,7 @@ void Application::stop()
         device_started_ = false;
     }
     if (poller_started_) {
-        poller_runtime_.stop();
+        protocol_poller_.stop();
         poller_started_ = false;
     }
     media_.reset();

@@ -2,7 +2,7 @@
 
 #include "resource_profile.h"
 #include "device_pipeline.h"
-#include "poller_runtime.h"
+#include "protocol_poller.h"
 #include "protocol_plugin.h"
 #include "media/detection_hub.h"
 #include "media/media_source.h"
@@ -42,7 +42,7 @@ public:
 private:
     ApplicationOptions options_;
     std::shared_ptr<media::MediaSource> media_;
-    PollerRuntime poller_runtime_;
+    ProtocolPoller protocol_poller_;
     std::unique_ptr<IDevicePipeline> device_;
     std::vector<std::unique_ptr<IProtocolPlugin>> protocols_;
     std::size_t started_protocol_count_{0};

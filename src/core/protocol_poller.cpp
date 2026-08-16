@@ -1,15 +1,15 @@
-#include "core/poller_runtime.h"
+#include "core/protocol_poller.h"
 
 #include <ztk/poller/poller_pool.h>
 
 namespace zero_ipc::core {
 
-PollerRuntime::~PollerRuntime()
+ProtocolPoller::~ProtocolPoller()
 {
     stop();
 }
 
-bool PollerRuntime::start(int poller_count)
+bool ProtocolPoller::start(int poller_count)
 {
     if (poller_pool_) {
         return true;
@@ -33,7 +33,7 @@ bool PollerRuntime::start(int poller_count)
     return true;
 }
 
-void PollerRuntime::stop()
+void ProtocolPoller::stop()
 {
     if (!poller_pool_) {
         return;
