@@ -47,6 +47,8 @@
     let hlsPlayer = null;
     let replayToken = 0;
     let replayFillingDays = false;
+    let pingTimer = null;
+    let reconnectTimer = null;
 
     function formatValue(value) {
       if (value instanceof Error) return value.message;
@@ -138,6 +140,25 @@
       $('metricObjects').textContent = '0';
     }
 
+    const cocoNames = [
+      '人', '自行车', '汽车', '摩托车', '飞机', '公交车', '火车', '卡车', '船', '红绿灯',
+      '消防栓', '停车标志', '停车计时器', '长椅', '鸟', '猫', '狗', '马', '羊', '牛',
+      '大象', '熊', '斑马', '长颈鹿', '背包', '伞', '手提包', '领带', '行李箱', '飞盘',
+      '滑雪板', '单板', '球', '风筝', '球棒', '手套', '滑板', '冲浪板', '网球拍', '瓶子',
+      '酒杯', '杯子', '叉子', '刀', '勺子', '碗', '香蕉', '苹果', '三明治', '橙子',
+      '西兰花', '胡萝卜', '热狗', '披萨', '甜甜圈', '蛋糕', '椅子', '沙发', '盆栽', '床',
+      '餐桌', '马桶', '电视', '笔记本', '鼠标', '遥控器', '键盘', '手机', '微波炉', '烤箱',
+      '烤面包机', '水槽', '冰箱', '书', '钟', '花瓶', '剪刀', '玩具熊', '吹风机', '牙刷',
+    ];
+
+    function classLabel(cls) {
+      const id = Number(cls);
+      if (Number.isInteger(id) && id >= 0 && id < cocoNames.length) {
+        return cocoNames[id];
+      }
+      return `类别${cls}`;
+    }
+
     function drawBoxes(message) {
       const canvas = ui.canvas;
       const context = canvas.getContext('2d');
@@ -159,7 +180,8 @@
         const y = object.y * height;
         const boxWidth = object.bw * width;
         const boxHeight = object.bh * height;
-        const label = `${object.cls} ${(Number(object.s) || 0).toFixed(2)}`;
+        const score = Math.round((Number(object.s) || 0) * 100);
+        const label = `${classLabel(object.cls)} ${score}%`;
         const labelWidth = context.measureText(label).width + 12;
         const labelHeight = Math.max(21, width / 38);
 
@@ -283,8 +305,31 @@
       setStatus('ai', '未连接');
     }
 
+    function clearLiveTimers() {
+      if (pingTimer) {
+        clearInterval(pingTimer);
+        pingTimer = null;
+      }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+    }
+
+    function startSignalingPing() {
+      if (pingTimer) {
+        clearInterval(pingTimer);
+      }
+      pingTimer = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 20000);
+    }
+
     function disconnect(reason = '用户主动断开') {
       connectedIntent = false;
+      clearLiveTimers();
       if (ws) {
         ws.onclose = null;
         try { ws.close(); } catch (_) {}
@@ -434,6 +479,7 @@
         return;
       }
 
+      clearLiveTimers();
       closePeer();
       connectedIntent = true;
       updateButton();
@@ -454,6 +500,7 @@
         setStatus('ws', '已连接', 'online');
         setGlobalState('查找设备', 'working');
         log('success', '信令服务已连接');
+        startSignalingPing();
         ws.send(JSON.stringify({ type: 'join', role: 'viewer', room }));
       };
 
@@ -513,6 +560,9 @@
           }
           return;
         }
+        if (message.type === 'pong') {
+          return;
+        }
         if (message.type === 'error') {
           const detail = message.message || '信令服务返回错误';
           setGlobalState('被拒绝', 'error');
@@ -522,15 +572,22 @@
       };
 
       ws.onclose = () => {
-        if (!connectedIntent) return;
+        if (!connectedIntent || viewMode !== 'live') {
+          return;
+        }
         ws = null;
         closePeer();
-        connectedIntent = false;
-        updateButton();
+        clearLiveTimers();
         setStatus('ws', '已断开', 'error');
-        setGlobalState('已断开', 'error');
-        showEmpty('已断开');
-        log('warn', '信令连接已关闭');
+        setGlobalState('重连中', 'working');
+        showEmpty('信令断开，正在重连…');
+        log('warn', '信令连接已关闭，1.5 秒后重连');
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          if (connectedIntent && viewMode === 'live') {
+            connect();
+          }
+        }, 1500);
       };
       ws.onerror = () => {
         setStatus('ws', '异常', 'error');
@@ -847,6 +904,7 @@
     });
 
     window.addEventListener('beforeunload', () => {
+      clearLiveTimers();
       try { ws?.close(); } catch (_) {}
       try { pc?.close(); } catch (_) {}
       stopReplay();
