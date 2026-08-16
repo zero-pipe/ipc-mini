@@ -6,15 +6,15 @@
 #include <mutex>
 #include <string>
 
-#if defined(ZERO_MINI_ENABLE_KVS) && ZERO_MINI_ENABLE_KVS
+#if defined(IPC_MINI_ENABLE_KVS) && IPC_MINI_ENABLE_KVS
 #include <com/amazonaws/kinesis/video/webrtcclient/Include.h>
 #endif
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 
 bool kvs_runtime_available()
 {
-#if defined(ZERO_MINI_ENABLE_KVS) && ZERO_MINI_ENABLE_KVS
+#if defined(IPC_MINI_ENABLE_KVS) && IPC_MINI_ENABLE_KVS
     return true;
 #else
     return false;
@@ -90,7 +90,7 @@ void WebRtcPeerConnection::set_remote_audio_handler(RemoteAudioHandler handler)
     on_remote_audio_ = std::move(handler);
 }
 
-#if defined(ZERO_MINI_ENABLE_KVS) && ZERO_MINI_ENABLE_KVS
+#if defined(IPC_MINI_ENABLE_KVS) && IPC_MINI_ENABLE_KVS
 
 bool WebRtcPeerConnection::start()
 {
@@ -213,7 +213,7 @@ bool WebRtcPeerConnection::start()
     track.kind = MEDIA_STREAM_TRACK_KIND_VIDEO;
     track.codec =
         RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE;
-    STRNCPY(track.streamId, "zero-mini", ARRAY_SIZE(track.streamId));
+    STRNCPY(track.streamId, "ipc-mini", ARRAY_SIZE(track.streamId));
     STRNCPY(track.trackId, "video", ARRAY_SIZE(track.trackId));
 
     RtcRtpTransceiverInit init {};
@@ -252,7 +252,7 @@ bool WebRtcPeerConnection::start()
     RtcMediaStreamTrack audio_track {};
     audio_track.kind = MEDIA_STREAM_TRACK_KIND_AUDIO;
     audio_track.codec = RTC_CODEC_MULAW;
-    STRNCPY(audio_track.streamId, "zero-mini", ARRAY_SIZE(audio_track.streamId));
+    STRNCPY(audio_track.streamId, "ipc-mini", ARRAY_SIZE(audio_track.streamId));
     STRNCPY(audio_track.trackId, "audio", ARRAY_SIZE(audio_track.trackId));
     RtcRtpTransceiverInit audio_init {};
     audio_init.direction = RTC_RTP_TRANSCEIVER_DIRECTION_SENDRECV;
@@ -472,7 +472,7 @@ bool WebRtcPeerConnection::handle_remote_candidate(const std::string& candidate,
 }
 
 bool WebRtcPeerConnection::write_video_frame(
-    const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame)
+    const std::shared_ptr<const ipc_mini::media::MediaFrame>& frame)
 {
     if (!frame || !media_ready_.load() || !video_transceiver_) {
         return false;
@@ -508,13 +508,13 @@ bool WebRtcPeerConnection::write_video_frame(
 }
 
 bool WebRtcPeerConnection::write_audio_frame(
-    const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame)
+    const std::shared_ptr<const ipc_mini::media::MediaFrame>& frame)
 {
-    if (!frame || frame->type() != zero_ipc::media::MediaType::Audio ||
+    if (!frame || frame->type() != ipc_mini::media::MediaType::Audio ||
         !media_ready_.load() || !audio_transceiver_) {
         return false;
     }
-    if (frame->codec() != zero_ipc::media::Codec::G711U || frame->size() == 0) {
+    if (frame->codec() != ipc_mini::media::Codec::G711U || frame->size() == 0) {
         return false;
     }
     /*
@@ -555,7 +555,7 @@ bool WebRtcPeerConnection::write_audio_frame(
 }
 
 bool WebRtcPeerConnection::send_detections(
-    const zero_ipc::media::DetectionResult& detections)
+    const ipc_mini::media::DetectionResult& detections)
 {
     PRtcDataChannel dc = nullptr;
     {
@@ -621,12 +621,12 @@ bool WebRtcPeerConnection::send_detections(
     return false;
 }
 
-#else // !ZERO_MINI_ENABLE_KVS
+#else // !IPC_MINI_ENABLE_KVS
 
 bool WebRtcPeerConnection::start()
 {
     std::fprintf(stderr,
-                 "[kvs] stub peer connection started (build with ZERO_MINI_ENABLE_KVS=1 "
+                 "[kvs] stub peer connection started (build with IPC_MINI_ENABLE_KVS=1 "
                  "after cross-compiling amazon-kinesis-video-streams-webrtc-sdk-c)\n");
     started_ = true;
     return true;
@@ -680,22 +680,22 @@ bool WebRtcPeerConnection::handle_remote_candidate(const std::string&,
 }
 
 bool WebRtcPeerConnection::write_video_frame(
-    const std::shared_ptr<const zero_ipc::media::MediaFrame>&)
+    const std::shared_ptr<const ipc_mini::media::MediaFrame>&)
 {
     return false;
 }
 
 bool WebRtcPeerConnection::write_audio_frame(
-    const std::shared_ptr<const zero_ipc::media::MediaFrame>&)
+    const std::shared_ptr<const ipc_mini::media::MediaFrame>&)
 {
     return false;
 }
 
-bool WebRtcPeerConnection::send_detections(const zero_ipc::media::DetectionResult&)
+bool WebRtcPeerConnection::send_detections(const ipc_mini::media::DetectionResult&)
 {
     return false;
 }
 
 #endif
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

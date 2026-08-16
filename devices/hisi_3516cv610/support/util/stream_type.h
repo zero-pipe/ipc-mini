@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-namespace zero_ipc{namespace util{
+namespace ipc_mini{namespace util{
 
 /* Callback tag values for stream_head::type (keep numeric ABI stable). */
 #define STREAM_P_FRAME 0
@@ -63,7 +63,7 @@ namespace zero_ipc{namespace util{
         STREAM_AUDIO_ENCODE_AAC = 0x2,
     };
 
-#define zero_ipc_TAG 0x5550564e
+#define ipc_mini_TAG 0x5550564e
     typedef struct
     {
         uint32_t  media_fourcc;

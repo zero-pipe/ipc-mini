@@ -10,7 +10,7 @@
 #include <sstream>
 #include <utility>
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 namespace {
 
 bool parse_ws_url(const std::string& url, std::string& host, int& port,
@@ -402,4 +402,4 @@ void WsClient::close()
     });
 }
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

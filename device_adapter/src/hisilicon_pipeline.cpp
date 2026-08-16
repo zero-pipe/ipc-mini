@@ -11,7 +11,7 @@
 #include <chrono>
 #include <cstdio>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 namespace {
 
 constexpr int kDefaultIdleStopSeconds = 5;
@@ -358,18 +358,18 @@ void HisiliconPipeline::ai_lifecycle_worker()
 
         if (ai_stream_required_ && !yolov8_) {
             const uint64_t generation = ai_generation_;
-            std::printf("[zero_mini] yolov8 starting in background...\n");
+            std::printf("[ipc_mini] yolov8 starting in background...\n");
             std::fflush(stdout);
             lock.unlock();
             const bool ok = start_yolov8_async(generation);
             lock.lock();
             if (ok) {
-                std::printf("[zero_mini] yolov8 ready\n");
+                std::printf("[ipc_mini] yolov8 ready\n");
                 std::fflush(stdout);
             } else if (ai_stream_required_ && ai_generation_ == generation &&
                        !yolov8_) {
                 std::fprintf(stderr,
-                             "[zero_mini] yolov8 start failed; preview keeps "
+                             "[ipc_mini] yolov8 start failed; preview keeps "
                              "running without detections\n");
                 ai_stream_required_ = false;
                 ++ai_generation_;
@@ -494,4 +494,4 @@ void HisiliconPipeline::stop_yolov8_locked()
     yolov8_.reset();
 }
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

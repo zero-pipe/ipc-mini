@@ -2,10 +2,10 @@
 
 #include <cstdio>
 
-namespace zero_ipc::protocol {
-using zero_mini::webrtc_net::get_optional_string;
-using zero_mini::webrtc_net::get_required_string;
-using zero_mini::webrtc_net::parse_json_object;
+namespace ipc_mini::protocol {
+using ipc_mini::webrtc_net::get_optional_string;
+using ipc_mini::webrtc_net::get_required_string;
+using ipc_mini::webrtc_net::parse_json_object;
 
 void WebRtcPlugin::Impl::on_signaling_message(const std::string& type,
                                               const std::string& json)
@@ -107,4 +107,4 @@ void WebRtcPlugin::Impl::on_signaling_disconnected()
     remove_all_viewers("signaling-disconnected");
 }
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

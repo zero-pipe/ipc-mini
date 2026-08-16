@@ -1,8 +1,8 @@
 {
-  "name": "zero-mini-signaling",
+  "name": "ipc_mini-signaling",
   "version": "1.0.0",
   "private": true,
-  "description": "Lightweight WebRTC signaling for zero-mini (Alibaba Cloud deployable)",
+  "description": "Lightweight WebRTC signaling for ipc_mini",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

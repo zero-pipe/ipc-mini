@@ -8,7 +8,7 @@
 #include <mutex>
 #include <vector>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 struct GopCacheConfig {
     std::size_t max_gops{4};
@@ -40,4 +40,4 @@ private:
     std::size_t bytes_{0};
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

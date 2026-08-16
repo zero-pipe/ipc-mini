@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 enum class FlvTagType : uint8_t {
     Audio = 8,
@@ -16,4 +16,4 @@ using FlvTagSink =
     std::function<bool(FlvTagType type, const uint8_t* data,
                        std::size_t size, uint32_t timestamp)>;
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

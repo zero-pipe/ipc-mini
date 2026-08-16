@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 struct NaluView {
     std::size_t offset{0};
@@ -57,4 +57,4 @@ private:
     std::vector<NaluView> nalus_;
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

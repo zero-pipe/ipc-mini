@@ -10,7 +10,7 @@
 #include <optional>
 #include <unordered_map>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 using KeyframeRequestHandler =
     std::function<bool(int channel_id, int stream_id)>;
@@ -57,4 +57,4 @@ private:
     GopCacheConfig cache_config_;
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

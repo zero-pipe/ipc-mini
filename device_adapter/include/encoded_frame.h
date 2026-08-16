@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 
 struct EncodedChunkView {
     const uint8_t* data{nullptr};
@@ -27,4 +27,4 @@ struct EncodedFrameView {
 std::shared_ptr<media::MediaFrame> copy_encoded_frame(
     const EncodedFrameView& source);
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

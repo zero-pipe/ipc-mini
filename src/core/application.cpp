@@ -3,7 +3,7 @@
 
 #include <utility>
 
-namespace zero_ipc::core {
+namespace ipc_mini::core {
 
 Application::Application(ApplicationOptions options,
                          std::unique_ptr<IDevicePipeline> device)
@@ -101,4 +101,4 @@ void Application::stop()
     running_ = false;
 }
 
-} // namespace zero_ipc::core
+} // namespace ipc_mini::core

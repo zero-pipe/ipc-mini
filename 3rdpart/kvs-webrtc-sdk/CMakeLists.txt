@@ -98,6 +98,10 @@ else()
 endif()
 
 if(NOT WIN32)
+if(CMAKE_CROSSCOMPILING)
+  # musl/glibc sysroots used by this project all provide ifaddrs.
+  add_definitions(-DHAVE_IFADDRS_H=1)
+else()
 CHECK_INCLUDE_FILES(ifaddrs.h       KVSWEBRTC_HAVE_IFADDRS_H)
 if(NOT KVSWEBRTC_HAVE_IFADDRS_H)
   message(FATAL_ERROR "Platform should support the ifaddrs interface.")
@@ -107,6 +111,7 @@ endif()
 CHECK_FUNCTION_EXISTS(getifaddrs    KVSWEBRTC_HAVE_GETIFADDRS)
 if(NOT KVSWEBRTC_HAVE_GETIFADDRS)
   message(FATAL_ERROR "Platform should support getifaddrs API.")
+endif()
 endif()
 
 # Check for poll.h
@@ -233,7 +238,9 @@ if(BUILD_DEPENDENCIES OR BUILD_WEBSOCKETS OR BUILD_SRTP OR BUILD_USRSCTP)
       set(BUILD_ARGS -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
                      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                      -DBUILD_OLD_MBEDTLS_VERSION=${BUILD_OLD_MBEDTLS_VERSION}
-                      "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -std=c99")
+                      "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -std=c99"
+                     -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+                     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER})
         build_dependency(mbedtls ${BUILD_ARGS})
     endif()
   endif()
@@ -292,7 +299,9 @@ if(BUILD_DEPENDENCIES OR BUILD_WEBSOCKETS OR BUILD_SRTP OR BUILD_USRSCTP)
         -DUSE_OPENSSL=${USE_OPENSSL}
         -DUSE_MBEDTLS=${USE_MBEDTLS}
         -DUSE_LIBSRTP3=${USE_LIBSRTP3}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS})
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER})
     build_dependency(srtp ${BUILD_ARGS})
   endif()
 
@@ -300,7 +309,9 @@ if(BUILD_DEPENDENCIES OR BUILD_WEBSOCKETS OR BUILD_SRTP OR BUILD_USRSCTP)
     message(STATUS "Building libusrsctp from source")
     set(BUILD_ARGS
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS})
+        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER})
     build_dependency(usrsctp ${BUILD_ARGS})
   endif()
 
@@ -342,7 +353,9 @@ else()
           -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
           -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
           -DKVS_DEFAULT_STACK_SIZE=${KVS_DEFAULT_STACK_SIZE}
-          -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS})
+          -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
+          -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+          -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER})
   build_dependency(kvspic ${BUILD_ARGS})
 endif()
 

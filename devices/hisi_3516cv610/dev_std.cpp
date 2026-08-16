@@ -2,7 +2,7 @@
 #include "font_renderer.h"
 
 const char* g_week_stsr[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-FontRenderer g_freetype("/opt/zero_mini/fonts/DejaVuSans.ttf");
+FontRenderer g_freetype("/opt/ipc_mini/fonts/DejaVuSans.ttf");
 
 int32_t rgb24to1555(int32_t r,int32_t g,int32_t b,int32_t a)
 {

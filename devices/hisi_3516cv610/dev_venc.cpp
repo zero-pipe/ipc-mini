@@ -214,7 +214,7 @@ namespace hisilicon{namespace dev{
 
     void venc::process_audio_stream(ot_audio_stream* pstream)
     {
-        zero_ipc::util::stream_head sh;
+        ipc_mini::util::stream_head sh;
 
         memset(&sh,0,sizeof(sh));
         sh.type = STREAM_AUDIO_FRAME;    
@@ -359,14 +359,14 @@ namespace hisilicon{namespace dev{
             return false;
         }
 
-        *pacode = zero_ipc::util::STREAM_AUDIO_ENCODE_NONE;
+        *pacode = ipc_mini::util::STREAM_AUDIO_ENCODE_NONE;
         if(std::dynamic_pointer_cast<aenc_g711u>(g_aenc_ptr))
         {
-            *pacode = zero_ipc::util::STREAM_AUDIO_ENCODE_G711U;
+            *pacode = ipc_mini::util::STREAM_AUDIO_ENCODE_G711U;
         }
         else if(std::dynamic_pointer_cast<aenc_aac>(g_aenc_ptr))
         {
-            *pacode = zero_ipc::util::STREAM_AUDIO_ENCODE_AAC;
+            *pacode = ipc_mini::util::STREAM_AUDIO_ENCODE_AAC;
         }
 
         *psample_rate = g_aenc_ptr->sample_rate();
@@ -649,7 +649,7 @@ namespace hisilicon{namespace dev{
             return;
         }
 
-        zero_ipc::util::stream_head sh;
+        ipc_mini::util::stream_head sh;
         memset(&sh,0,sizeof(sh));
         sh.type = STREAM_NALU_SLICE;
 
@@ -745,7 +745,7 @@ namespace hisilicon{namespace dev{
             return;
         }
 
-        zero_ipc::util::stream_head sh;
+        ipc_mini::util::stream_head sh;
         memset(&sh,0,sizeof(sh));
         sh.type = STREAM_NALU_SLICE;
 

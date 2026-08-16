@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cross-build example programs on the HiSilicon host.
-# Does not modify board/Makefile or the main zero_mini build.
+# Does not modify board/Makefile or the main ipc_mini build.
 set -eo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"

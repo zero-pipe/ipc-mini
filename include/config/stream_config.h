@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace zero_ipc::config {
+namespace ipc_mini::config {
 
 enum class StreamStart { Boot, OnDemand };
 
@@ -62,4 +62,4 @@ struct StreamsConfig {
     AiStreamConfig ai;
 };
 
-} // namespace zero_ipc::config
+} // namespace ipc_mini::config

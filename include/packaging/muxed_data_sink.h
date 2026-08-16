@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <functional>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 using MuxedDataSink =
     std::function<bool(const uint8_t* data, std::size_t size)>;
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

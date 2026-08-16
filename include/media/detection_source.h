@@ -7,7 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 class DetectionSource final {
 public:
@@ -24,4 +24,4 @@ private:
     std::unordered_map<uint64_t, Handler> handlers_;
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

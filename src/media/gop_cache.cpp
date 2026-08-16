@@ -1,6 +1,6 @@
 #include "media/gop_cache.h"
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 GopCache::GopCache(GopCacheConfig config) : config_(config)
 {
@@ -69,4 +69,4 @@ std::vector<std::shared_ptr<const MediaFrame>> GopCache::snapshot_from_latest_ke
     return gops_.back().frames;
 }
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

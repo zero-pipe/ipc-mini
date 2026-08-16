@@ -3,7 +3,7 @@
 #include "media_format.h"
 #include <cstdint>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 /**
  * Static registration metadata for one track on a stream_id.
@@ -28,4 +28,4 @@ struct StreamTrack {
     }
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 uint64_t DetectionSource::subscribe(Handler handler)
 {
@@ -42,4 +42,4 @@ std::size_t DetectionSource::subscriber_count() const
     return handlers_.size();
 }
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

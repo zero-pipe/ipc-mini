@@ -3,7 +3,7 @@
 #include <cstring>
 #include <limits>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 
 std::shared_ptr<media::MediaFrame> copy_encoded_frame(const EncodedFrameView& source)
 {
@@ -49,4 +49,4 @@ std::shared_ptr<media::MediaFrame> copy_encoded_frame(const EncodedFrameView& so
     return frame;
 }
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

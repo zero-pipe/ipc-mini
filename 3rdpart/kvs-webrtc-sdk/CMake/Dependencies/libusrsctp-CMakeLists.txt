@@ -15,6 +15,9 @@ ExternalProject_Add(project_libusrsctp
                       "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -fPIC"
                       -Dsctp_werror=0
                       -Dsctp_build_programs=0
+                      -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                      -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
     BUILD_ALWAYS      TRUE
     TEST_COMMAND      ""
 )

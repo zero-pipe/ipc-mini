@@ -6,7 +6,7 @@
 #include <limits>
 #include <utility>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 struct FlvMuxer::Context {
     explicit Context(FlvTagSink output) : output(std::move(output))
@@ -164,4 +164,4 @@ int FlvMuxer::on_packet(void* param, int type, const void* data,
     return -1;
 }
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

@@ -1,6 +1,6 @@
 # 海思视频 Pipeline 学习笔记
 
-本文整理本次对 `zero-mini` 视频链路的学习与分析，重点说明：
+本文整理本次对 `ipc_mini` 视频链路的学习与分析，重点说明：
 
 - `channel_id`、`stream_id` 分别表示什么；
 - 海思的 `VI Device`、`VI Pipe`、`VI Channel` 为什么要分层；

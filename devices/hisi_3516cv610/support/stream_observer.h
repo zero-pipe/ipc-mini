@@ -7,7 +7,7 @@
 #include <mutex>
 #include <thread>
 
-namespace zero_ipc{namespace util{
+namespace ipc_mini{namespace util{
 
     class stream_obj
     {

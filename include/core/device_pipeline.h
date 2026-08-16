@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace zero_ipc::core {
+namespace ipc_mini::core {
 
 /**
  * Device / capture boundary (DIP).
@@ -32,4 +32,4 @@ public:
     }
 };
 
-} // namespace zero_ipc::core
+} // namespace ipc_mini::core

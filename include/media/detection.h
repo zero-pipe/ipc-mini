@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 struct DetectionBox {
     int class_id{0};
@@ -24,4 +24,4 @@ struct DetectionResult {
     std::vector<DetectionBox> boxes;
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

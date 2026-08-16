@@ -4,7 +4,7 @@
 #include "media/media_frame.h"
 #include <memory>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 enum class MpegContainer {
     TransportStream,
@@ -34,4 +34,4 @@ private:
     std::unique_ptr<Context> context_;
 };
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

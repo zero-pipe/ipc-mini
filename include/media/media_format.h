@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 enum class MediaType : uint8_t {
     Video,
@@ -51,4 +51,4 @@ struct AudioFormat {
     std::vector<uint8_t> extradata;
 };
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

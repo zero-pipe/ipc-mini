@@ -16,7 +16,7 @@ namespace hisilicon::dev {
 class yolov8;
 }
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 
 class AiStreamPublisher;
 
@@ -33,7 +33,7 @@ struct HisiliconPipelineOptions {
     bool audio_enabled{false};
     bool audio_microphone{false};
     std::string audio_codec{"G711U"};
-    /** Empty → keep FontRenderer default (/opt/zero_mini/fonts/...). */
+    /** Empty → keep FontRenderer default (/opt/ipc_mini/fonts/...). */
     std::string font_path;
 };
 
@@ -84,4 +84,4 @@ private:
     bool svp_inited_{false};
 };
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

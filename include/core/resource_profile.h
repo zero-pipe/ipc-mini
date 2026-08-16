@@ -3,7 +3,7 @@
 #include "media/gop_cache.h"
 #include <cstddef>
 
-namespace zero_ipc::core {
+namespace ipc_mini::core {
 
 /**
  * Process-wide memory and worker limits.
@@ -41,4 +41,4 @@ struct ResourceProfile {
     }
 };
 
-} // namespace zero_ipc::core
+} // namespace ipc_mini::core

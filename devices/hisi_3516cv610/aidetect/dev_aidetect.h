@@ -12,8 +12,8 @@ namespace hisilicon{namespace dev{
 
 #define AIDETECT_RECT_NUM 64
     class aidetect 
-        :public zero_ipc::util::stream_obj
-        ,public zero_ipc::util::stream_post
+        :public ipc_mini::util::stream_obj
+        ,public ipc_mini::util::stream_post
         ,public std::enable_shared_from_this<aidetect>
     {
     public:

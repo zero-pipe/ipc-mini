@@ -10,7 +10,7 @@
 struct ztk_poller;
 struct ztk_tcp_client;
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 
 /**
  * Minimal client WebSocket (text frames, ws:// only).
@@ -66,4 +66,4 @@ private:
     std::mutex handler_mutex_;
 };
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

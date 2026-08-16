@@ -1,7 +1,7 @@
 #ifndef check_interval_include_h
 #define check_interval_include_h
 
-namespace zero_ipc{namespace util{
+namespace ipc_mini{namespace util{
 
     class check_interval
     {

@@ -1,5 +1,5 @@
 /**
- * zero-mini composition root: HisiliconPipeline + WebRtcPlugin only.
+ * ipc_mini composition root: HisiliconPipeline + WebRtcPlugin only.
  */
 
 #include "core/application.h"
@@ -53,7 +53,7 @@ void on_fatal_signal(int sig, siginfo_t* info, void* context)
 #endif
     char buf[128];
     char* p = buf;
-    const char prefix[] = "\n[zero_mini] FATAL sig=";
+    const char prefix[] = "\n[ipc_mini] FATAL sig=";
     std::memcpy(p, prefix, sizeof(prefix) - 1);
     p += sizeof(prefix) - 1;
     *p++ = static_cast<char>('0' + (sig / 10));
@@ -77,10 +77,10 @@ void install_fatal_handler(int sig)
 }
 
 struct CommandLineOptions {
-    zero_ipc::device_adapter::HisiliconPipelineOptions device{};
-    std::string install_root{"/opt/zero_mini"};
-    std::string config_directory{"/opt/zero_mini/etc"};
-    zero_ipc::protocol::WebRtcPluginOptions webrtc{};
+    ipc_mini::device_adapter::HisiliconPipelineOptions device{};
+    std::string install_root{"/opt/ipc_mini"};
+    std::string config_directory{"/opt/ipc_mini/etc"};
+    ipc_mini::protocol::WebRtcPluginOptions webrtc{};
 };
 
 bool path_is_dir(const std::string& path)
@@ -124,7 +124,7 @@ std::string resolve_exe_dir(const char* argv0)
             return dirname_of(std::string(cwd) + "/" + argv0);
         }
     }
-    return "/opt/zero_mini";
+    return "/opt/ipc_mini";
 }
 
 std::string install_root_from_config_dir(const std::string& config_directory)
@@ -133,7 +133,7 @@ std::string install_root_from_config_dir(const std::string& config_directory)
 }
 
 /**
- * Config dir: --config-dir if given; else <exe-dir>/etc; else /opt/zero_mini/etc.
+ * Config dir: --config-dir if given; else <exe-dir>/etc; else /opt/ipc_mini/etc.
  * Fonts/yolov8 resolve from that config dir's parent.
  */
 std::string find_config_directory(int argc, char** argv, const char* argv0)
@@ -147,10 +147,10 @@ std::string find_config_directory(int argc, char** argv, const char* argv0)
     if (path_is_dir(beside_exe)) {
         return beside_exe;
     }
-    return "/opt/zero_mini/etc";
+    return "/opt/ipc_mini/etc";
 }
 
-void apply_runtime_config(const zero_ipc::config::RuntimeConfig& config,
+void apply_runtime_config(const ipc_mini::config::RuntimeConfig& config,
                           CommandLineOptions& command_line)
 {
     command_line.device.lane_mode =
@@ -177,7 +177,7 @@ void apply_runtime_config(const zero_ipc::config::RuntimeConfig& config,
     command_line.webrtc.max_viewers = config.webrtc.max_viewers;
     command_line.webrtc.ice_servers.clear();
     for (const auto& ice : config.webrtc.ice_servers) {
-        zero_ipc::protocol::WebRtcIceServer s;
+        ipc_mini::protocol::WebRtcIceServer s;
         s.urls = ice.urls;
         s.username = ice.username;
         s.credential = ice.credential;
@@ -189,7 +189,7 @@ void apply_runtime_config(const zero_ipc::config::RuntimeConfig& config,
 
 int main(int argc, char** argv)
 {
-    using namespace zero_ipc;
+    using namespace ipc_mini;
 
     CommandLineOptions command_line;
     command_line.config_directory =
@@ -201,10 +201,10 @@ int main(int argc, char** argv)
     std::string config_error;
     if (!config::load_runtime_config(
             command_line.config_directory, runtime_config, config_error)) {
-        std::fprintf(stderr, "[zero_mini] config error: %s\n",
+        std::fprintf(stderr, "[ipc_mini] config error: %s\n",
                      config_error.c_str());
         std::fprintf(stderr,
-                     "[zero_mini] hint: place etc/zero_mini.json beside binary, "
+                     "[ipc_mini] hint: place etc/ipc_mini.json beside binary, "
                      "or pass --config-dir <package>/etc\n");
         return 1;
     }
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
     if (path_is_file(font_path)) {
         command_line.device.font_path = font_path;
     }
-    std::printf("[zero_mini] config_dir=%s install_root=%s font=%s\n",
+    std::printf("[ipc_mini] config_dir=%s install_root=%s font=%s\n",
                 command_line.config_directory.c_str(),
                 command_line.install_root.c_str(),
                 command_line.device.font_path.empty()
@@ -250,30 +250,30 @@ int main(int argc, char** argv)
             command_line.webrtc));
     }
 
-    std::printf("[zero_mini] streams %s\n",
+    std::printf("[ipc_mini] streams %s\n",
                 config::format_streams_summary(runtime_config).c_str());
     if (runtime_config.record.enable) {
         std::fprintf(stderr,
-                     "[zero_mini] record file=%s (config loaded; muxer not wired yet)\n",
+                     "[ipc_mini] record file=%s (config loaded; muxer not wired yet)\n",
                      runtime_config.record.file.c_str());
     } else if (!runtime_config.record.file.empty()) {
-        std::printf("[zero_mini] record off file=%s\n",
+        std::printf("[ipc_mini] record off file=%s\n",
                     runtime_config.record.file.c_str());
     }
     std::printf(
-        "[zero_mini] starting sensor=%s webrtc=%s preview=%s room=%s\n",
+        "[ipc_mini] starting sensor=%s webrtc=%s preview=%s room=%s\n",
         command_line.device.sensor_name.c_str(),
         runtime_config.webrtc.enable ? "on" : "off",
         runtime_config.webrtc.preview.c_str(),
         command_line.webrtc.room.c_str());
-    std::printf("[zero_mini] signaling %s\n",
+    std::printf("[ipc_mini] signaling %s\n",
                 command_line.webrtc.signaling_url.c_str());
 
     if (!app.start()) {
-        std::fprintf(stderr, "[zero_mini] start failed\n");
+        std::fprintf(stderr, "[ipc_mini] start failed\n");
         return 2;
     }
-    std::printf("[zero_mini] start ok — waiting for viewer via signaling\n");
+    std::printf("[ipc_mini] start ok — waiting for viewer via signaling\n");
     std::fflush(stdout);
 
     {
@@ -283,7 +283,7 @@ int main(int argc, char** argv)
         });
     }
 
-    std::printf("[zero_mini] stopping...\n");
+    std::printf("[ipc_mini] stopping...\n");
     std::fflush(stdout);
 
     // KVS freePeerConnection / usrsctp can block forever on this platform.
@@ -291,13 +291,13 @@ int main(int argc, char** argv)
     std::thread([] {
         std::this_thread::sleep_for(std::chrono::seconds(3));
         std::fprintf(stderr,
-                     "[zero_mini] stop watchdog fired — forcing exit\n");
+                     "[ipc_mini] stop watchdog fired — forcing exit\n");
         std::fflush(stderr);
         _exit(1);
     }).detach();
 
     app.stop();
-    std::printf("[zero_mini] bye\n");
+    std::printf("[ipc_mini] bye\n");
     std::fflush(stdout);
     return 0;
 }

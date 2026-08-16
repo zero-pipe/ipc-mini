@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-namespace zero_ipc::core {
+namespace ipc_mini::core {
 
 struct ApplicationOptions {
     ResourceProfile profile{ResourceProfile::hisi_32mb()};
@@ -48,4 +48,4 @@ private:
     bool running_{false};
 };
 
-} // namespace zero_ipc::core
+} // namespace ipc_mini::core

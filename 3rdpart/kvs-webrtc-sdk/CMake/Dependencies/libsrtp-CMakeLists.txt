@@ -26,6 +26,11 @@ ExternalProject_Add(project_libsrtp
                       -DBUILD_SHARED_LIBS=${LIBSRTP_SHARED_LIBS}
                       -DOPENSSL_ROOT_DIR=${OPEN_SRC_INSTALL_PREFIX}
                       -DLIBSRTP_TEST_APPS=OFF
+                      -DCRYPTO_LIBRARY=internal
+                      -DENABLE_WARNINGS_AS_ERRORS=OFF
+                      -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                      -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
     BUILD_ALWAYS      TRUE
     TEST_COMMAND      ""
 )

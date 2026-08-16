@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cstdio>
 
-namespace zero_ipc::protocol {
-using zero_mini::webrtc_net::get_optional_string;
-using zero_mini::webrtc_net::parse_json_object;
+namespace ipc_mini::protocol {
+using ipc_mini::webrtc_net::get_optional_string;
+using ipc_mini::webrtc_net::parse_json_object;
 
 bool WebRtcPlugin::Impl::create_viewer(const std::string& viewer_id,
                                        const std::string& sdp)
@@ -27,9 +27,9 @@ bool WebRtcPlugin::Impl::create_viewer(const std::string& viewer_id,
         return false;
     }
 
-    auto peer = std::make_shared<zero_mini::webrtc_net::WebRtcPeerConnection>(
+    auto peer = std::make_shared<ipc_mini::webrtc_net::WebRtcPeerConnection>(
         peer_config());
-    std::weak_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> weak_peer = peer;
+    std::weak_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> weak_peer = peer;
 
     peer->set_local_candidate_handler(
         [this, viewer_id](const std::string& candidate_json) {
@@ -47,7 +47,7 @@ bool WebRtcPlugin::Impl::create_viewer(const std::string& viewer_id,
                 (void)get_optional_string(
                     candidate_message, "sdpMid", mid, parse_error);
             }
-            std::shared_ptr<zero_mini::webrtc_net::SignalingClient> signal;
+            std::shared_ptr<ipc_mini::webrtc_net::SignalingClient> signal;
             {
                 std::lock_guard lock(mutex);
                 signal = signaling;
@@ -63,7 +63,7 @@ bool WebRtcPlugin::Impl::create_viewer(const std::string& viewer_id,
             if (type != "answer" || !running.load()) {
                 return;
             }
-            std::shared_ptr<zero_mini::webrtc_net::SignalingClient> signal;
+            std::shared_ptr<ipc_mini::webrtc_net::SignalingClient> signal;
             {
                 std::lock_guard lock(mutex);
                 signal = signaling;
@@ -135,7 +135,7 @@ bool WebRtcPlugin::Impl::create_viewer(const std::string& viewer_id,
 
 void WebRtcPlugin::Impl::on_peer_state(
     const std::string& viewer_id,
-    const std::weak_ptr<zero_mini::webrtc_net::WebRtcPeerConnection>& weak_peer,
+    const std::weak_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection>& weak_peer,
     const std::string& state)
 {
     auto peer = weak_peer.lock();
@@ -163,7 +163,7 @@ void WebRtcPlugin::Impl::on_peer_state(
 
 void WebRtcPlugin::Impl::on_connected(
     const std::string& viewer_id,
-    const std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection>& peer)
+    const std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection>& peer)
 {
     {
         std::lock_guard lock(mutex);
@@ -297,4 +297,4 @@ void WebRtcPlugin::Impl::remove_all_viewers(const char* reason)
     }
 }
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <memory>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 class Mp4Muxer final {
 public:
@@ -25,4 +25,4 @@ private:
     std::unique_ptr<Context> context_;
 };
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

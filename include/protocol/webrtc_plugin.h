@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace zero_ipc::protocol {
+namespace ipc_mini::protocol {
 
 struct WebRtcIceServer {
     std::string urls;
@@ -51,4 +51,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

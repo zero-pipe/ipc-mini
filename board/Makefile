@@ -1,17 +1,17 @@
-# Board build for zero-mini (Hi3516CV610).
+# Board build for ipc_mini (Hi3516CV610).
 #
-#   cd /any/path/zero-mini
+#   cd /any/path/ipc-mini
 #   source /etc/profile && make -f board/Makefile -j$(nproc)
 #
 # Optional KVS WebRTC media stack (after you cross-build the SDK under 3rdpart):
-#   make -f board/Makefile ZERO_MINI_ENABLE_KVS=1 -j$(nproc)
+#   make -f board/Makefile IPC_MINI_ENABLE_KVS=1 -j$(nproc)
 #   # default KVS_ROOT=$(ROOT)/3rdpart/kvs-webrtc-sdk
 
 include board/Makefile.param
 
 ROOT := .
 DEVICE := $(ROOT)/devices/hisi_3516cv610
-ZERO_MINI_ENABLE_KVS ?= 0
+IPC_MINI_ENABLE_KVS ?= 0
 KVS_ROOT ?= $(ROOT)/3rdpart/kvs-webrtc-sdk
 
 CXX := $(CROSS)g++
@@ -21,7 +21,7 @@ CXXFLAGS += -std=c++17 -Wno-reorder -Wno-psabi
 CFLAGS   += -static -ffunction-sections -fdata-sections
 CFLAGS   += -include stddef.h
 CFLAGS   += -DNPU -DSENSOR0_TYPE=$(SENSOR0_TYPE) -DSENSOR1_TYPE=$(SENSOR1_TYPE)
-CFLAGS   += -DZERO_MINI_ENABLE_KVS=$(ZERO_MINI_ENABLE_KVS)
+CFLAGS   += -DIPC_MINI_ENABLE_KVS=$(IPC_MINI_ENABLE_KVS)
 
 INC_PATH += -I$(ROOT)/include
 INC_PATH += -I$(ROOT)/device_adapter/include
@@ -34,7 +34,7 @@ INC_PATH += -I$(DEVICE)
 INC_PATH += -I$(DEVICE)/support
 INC_PATH += -I$(DEVICE)/sensor/common
 
-ifeq ($(ZERO_MINI_ENABLE_KVS),1)
+ifeq ($(IPC_MINI_ENABLE_KVS),1)
 KVS_BUILD ?= $(KVS_ROOT)/build-musl
 KVS_OPEN  ?= $(KVS_ROOT)/open-source
 INC_PATH += -I$(KVS_ROOT)/src/include
@@ -42,7 +42,7 @@ INC_PATH += -I$(KVS_OPEN)/include
 endif
 
 BUILD := build
-target := zero_mini
+target := ipc_mini
 
 LOCAL_CXX := \
 	app/main.cpp \
@@ -168,7 +168,7 @@ LIBS += $(REL_LIB)/libaac_sbr_enc.a
 LIBS += $(REL_LIB)/libaac_sbr_dec.a
 LIBS += $(REL_LIB)/libupvqe.a
 LIBS += $(REL_LIB)/libsecurec.a
-ifeq ($(ZERO_MINI_ENABLE_KVS),1)
+ifeq ($(IPC_MINI_ENABLE_KVS),1)
 # PeerConnection media path only. Do NOT link AWS SignalingClient /
 # kvsCommonLws / libwebsockets — zero-mini uses its own WS signaling.
 LIBS += $(KVS_BUILD)/libkvsWebrtcClient.a
@@ -187,7 +187,7 @@ LIBS += $(KVS_OPEN)/lib/libmbedcrypto.a
 endif
 LIBS += -Wl,--end-group
 LIBS += -Wl,-gc-sections
-LIBS += -Wl,-Map,zero_mini.map
+LIBS += -Wl,-Map,ipc_mini.map
 LIBS += -lpthread -ldl -lrt -lm
 
 LOCAL_CXX_OBJ := $(addprefix $(BUILD)/local/,$(LOCAL_CXX:.cpp=.o))
@@ -204,7 +204,7 @@ all: check $(target)
 
 check:
 	@test -f "$(DEVICE)/dev_chn.cpp" || (echo "missing device tree: $(DEVICE)"; exit 1)
-	@test -f "app/main.cpp" || (echo "run make from zero-mini root"; exit 1)
+	@test -f "app/main.cpp" || (echo "run make from ipc-mini root"; exit 1)
 
 $(target): $(ALL_OBJ)
 	@echo "LD $(target)"
@@ -235,4 +235,4 @@ $(BUILD)/device/%.o: $(DEVICE)/%.c
 -include $(ALL_DEP)
 
 clean:
-	-rm -rf $(BUILD) $(target) zero_mini.map
+	-rm -rf $(BUILD) $(target) ipc_mini.map

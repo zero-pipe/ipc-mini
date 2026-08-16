@@ -330,7 +330,7 @@ namespace hisilicon{namespace dev{
         int32_t nalu_cnt = 0;
         uint64_t time_stamp = 0;
 
-        zero_ipc::util::stream_head sh;
+        ipc_mini::util::stream_head sh;
 
         memset(&sh,0,sizeof(sh));
         sh.type = STREAM_NALU_SLICE;    
@@ -431,7 +431,7 @@ namespace hisilicon{namespace dev{
 
         init_result(&result);
 
-        zero_ipc::util::check_interval ci;
+        ipc_mini::util::check_interval ci;
         while(m_bstart)
         {
             ret = ss_mpi_vpss_get_chn_frame(m_vpss_grp,m_vpss_chn,&frame_info,1000);

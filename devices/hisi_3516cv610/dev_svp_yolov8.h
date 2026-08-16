@@ -38,8 +38,8 @@ namespace hisilicon{namespace dev{
     }svp_npu_rect_info_t;
 
     class yolov8 
-        :public zero_ipc::util::stream_obj
-        ,public zero_ipc::util::stream_post
+        :public ipc_mini::util::stream_obj
+        ,public ipc_mini::util::stream_post
         ,public std::enable_shared_from_this<yolov8>
     {
         public:

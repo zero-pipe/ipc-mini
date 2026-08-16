@@ -1,6 +1,6 @@
 #include "media/media_frame.h"
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 std::shared_ptr<MediaFrame> MediaFrame::create(MediaType type, Codec codec,
                                                 int stream_id,
@@ -31,4 +31,4 @@ void MediaFrame::add_nalu(std::size_t offset, std::size_t size)
     nalus_.push_back({offset, size});
 }
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

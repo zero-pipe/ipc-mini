@@ -357,7 +357,7 @@ namespace hisilicon{namespace dev{
         sys::release();
     }
 
-    void chn::on_stream_come(zero_ipc::util::stream_obj_ptr sobj,zero_ipc::util::stream_head* head, const char* buf, int32_t len)
+    void chn::on_stream_come(ipc_mini::util::stream_obj_ptr sobj,ipc_mini::util::stream_head* head, const char* buf, int32_t len)
     {
         (void)sobj;
         (void)head;
@@ -365,7 +365,7 @@ namespace hisilicon{namespace dev{
         (void)len;
     }
 
-    void chn::on_stream_error(zero_ipc::util::stream_obj_ptr sobj,int32_t errno)
+    void chn::on_stream_error(ipc_mini::util::stream_obj_ptr sobj,int32_t errno)
     {
     }
 

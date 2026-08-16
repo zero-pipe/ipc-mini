@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace zero_ipc::protocol {
+namespace ipc_mini::protocol {
 namespace webrtc_detail {
 
 constexpr std::size_t kMaxViewerLimit = 3;
@@ -53,7 +53,7 @@ struct WebRtcPlugin::Impl {
 
     struct ViewerSession {
         std::string viewer_id;
-        std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer;
+        std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> peer;
         bool remote_description_ready{false};
         std::deque<std::shared_ptr<const media::MediaFrame>> video_queue;
         std::deque<std::shared_ptr<const media::MediaFrame>> audio_queue;
@@ -69,13 +69,13 @@ struct WebRtcPlugin::Impl {
     };
 
     struct ReapTask {
-        std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer;
+        std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> peer;
     };
 
     WebRtcPluginOptions options;
     std::shared_ptr<media::MediaSource> media;
     std::shared_ptr<media::DetectionSource> detection_source;
-    std::shared_ptr<zero_mini::webrtc_net::SignalingClient> signaling;
+    std::shared_ptr<ipc_mini::webrtc_net::SignalingClient> signaling;
 
     ztk_poller_pool* signaling_pool{nullptr};
     ztk_poller* signaling_poller{nullptr};
@@ -103,9 +103,9 @@ struct WebRtcPlugin::Impl {
     bool start_runtime();
     void destroy_runtime();
     void queue_reap(
-        std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer);
+        std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> peer);
     std::size_t viewer_limit() const;
-    zero_mini::webrtc_net::PeerConnectionConfig peer_config() const;
+    ipc_mini::webrtc_net::PeerConnectionConfig peer_config() const;
 
     void on_signaling_message(const std::string& type, const std::string& json);
     void on_offer(const Json::Value& message, std::string& parse_error);
@@ -117,11 +117,11 @@ struct WebRtcPlugin::Impl {
     bool create_viewer(const std::string& viewer_id, const std::string& sdp);
     void on_peer_state(
         const std::string& viewer_id,
-        const std::weak_ptr<zero_mini::webrtc_net::WebRtcPeerConnection>& weak_peer,
+        const std::weak_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection>& weak_peer,
         const std::string& state);
     void on_connected(
         const std::string& viewer_id,
-        const std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection>& peer);
+        const std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection>& peer);
     void apply_remote_candidate(const std::string& viewer_id,
                                 const std::string& candidate,
                                 const std::string& mid);
@@ -139,4 +139,4 @@ struct WebRtcPlugin::Impl {
     void drain();
 };
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

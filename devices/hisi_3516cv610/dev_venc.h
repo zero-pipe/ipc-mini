@@ -13,8 +13,8 @@ namespace hisilicon{namespace dev{
     typedef std::shared_ptr<venc> venc_ptr;
 
     class venc
-        :public zero_ipc::util::stream_obj
-        ,public zero_ipc::util::stream_post
+        :public ipc_mini::util::stream_obj
+        ,public ipc_mini::util::stream_post
         ,public std::enable_shared_from_this<venc>
     {
         public:

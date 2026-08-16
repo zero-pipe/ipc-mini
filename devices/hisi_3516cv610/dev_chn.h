@@ -40,7 +40,7 @@ namespace hisilicon{namespace dev{
     };
 
     class chn 
-        :public zero_ipc::util::stream_observer
+        :public ipc_mini::util::stream_observer
          ,public std::enable_shared_from_this<chn>
     {
         public:
@@ -62,8 +62,8 @@ namespace hisilicon{namespace dev{
 
             static void start_capture(bool enable);
 
-            void on_stream_come(zero_ipc::util::stream_obj_ptr sobj,zero_ipc::util::stream_head* head, const char* buf, int32_t len);
-            void on_stream_error(zero_ipc::util::stream_obj_ptr sobj,int32_t errno);
+            void on_stream_come(ipc_mini::util::stream_obj_ptr sobj,ipc_mini::util::stream_head* head, const char* buf, int32_t len);
+            void on_stream_error(ipc_mini::util::stream_obj_ptr sobj,int32_t errno);
 
             //for audio
             static bool enable_audio(bool enable,bool is_mic,const char* name);

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 namespace {
 
 void append_hex_escape(std::string& output, unsigned char value)
@@ -121,4 +121,4 @@ bool get_optional_int(const Json::Value& object, const char* field,
     return true;
 }
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

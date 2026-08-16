@@ -1,6 +1,6 @@
 #include "media/media_source.h"
 
-namespace zero_ipc::media {
+namespace ipc_mini::media {
 
 MediaSource::MediaSource(int channel_id, GopCacheConfig config)
     : channel_id_(channel_id), cache_config_(config)
@@ -186,4 +186,4 @@ bool MediaSource::play_g711u(const uint8_t* data, size_t len) const
     return handler && handler(data, len);
 }
 
-} // namespace zero_ipc::media
+} // namespace ipc_mini::media

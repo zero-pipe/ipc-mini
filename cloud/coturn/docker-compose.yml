@@ -1,3 +1,4 @@
+# Use ../up.sh from cloud/ — do not run docker compose by hand.
 services:
   coturn:
     image: coturn/coturn:latest

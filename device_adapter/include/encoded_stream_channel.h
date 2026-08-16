@@ -21,7 +21,7 @@
 
 #include <dev_chn.h>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 
 class EncodedStreamChannel final : public hisilicon::dev::chn {
 public:
@@ -29,10 +29,10 @@ public:
                          int32_t channel_id,
                          std::shared_ptr<media::MediaSource> media_source);
 
-    void on_stream_come(zero_ipc::util::stream_obj_ptr sobj,
-                        zero_ipc::util::stream_head* head,
+    void on_stream_come(ipc_mini::util::stream_obj_ptr sobj,
+                        ipc_mini::util::stream_head* head,
                         const char* buf, int32_t len) override;
-    void on_stream_error(zero_ipc::util::stream_obj_ptr sobj, int32_t error_code) override;
+    void on_stream_error(ipc_mini::util::stream_obj_ptr sobj, int32_t error_code) override;
 
     bool register_encoded_tracks(const config::StreamsConfig& streams,
                                  media::Codec video_codec);
@@ -47,4 +47,4 @@ private:
     media::Codec audio_codec_{media::Codec::Unknown};
 };
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

@@ -7,7 +7,7 @@
 #include <limits>
 #include <utility>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 namespace {
 int stream_codec(media::Codec codec)
@@ -159,4 +159,4 @@ int MpegMuxer::write_packet(void* param, int, void* packet, std::size_t bytes)
     return -1;
 }
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging

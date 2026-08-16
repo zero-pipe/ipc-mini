@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 
-namespace zero_ipc::protocol {
+namespace ipc_mini::protocol {
 
 bool WebRtcPlugin::Impl::start_uplink()
 {
@@ -236,7 +236,7 @@ void WebRtcPlugin::Impl::enqueue_detection(
 void WebRtcPlugin::Impl::drain()
 {
     struct Batch {
-        std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer;
+        std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> peer;
         std::deque<std::shared_ptr<const media::MediaFrame>> video_frames;
         std::deque<std::shared_ptr<const media::MediaFrame>> audio_frames;
         std::optional<media::DetectionResult> detection;
@@ -278,4 +278,4 @@ void WebRtcPlugin::Impl::drain()
     }
 }
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

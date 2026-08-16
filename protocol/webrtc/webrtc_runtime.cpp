@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <new>
 
-namespace zero_ipc::protocol {
+namespace ipc_mini::protocol {
 namespace webrtc_detail {
 
 void run_sync_call(void* user)
@@ -170,7 +170,7 @@ bool WebRtcPlugin::Impl::start_runtime()
 }
 
 void WebRtcPlugin::Impl::queue_reap(
-    std::shared_ptr<zero_mini::webrtc_net::WebRtcPeerConnection> peer)
+    std::shared_ptr<ipc_mini::webrtc_net::WebRtcPeerConnection> peer)
 {
     if (!peer) {
         return;
@@ -195,16 +195,16 @@ std::size_t WebRtcPlugin::Impl::viewer_limit() const
         static_cast<std::size_t>(std::max(options.max_viewers, 1)));
 }
 
-zero_mini::webrtc_net::PeerConnectionConfig
+ipc_mini::webrtc_net::PeerConnectionConfig
 WebRtcPlugin::Impl::peer_config() const
 {
-    zero_mini::webrtc_net::PeerConnectionConfig config;
+    ipc_mini::webrtc_net::PeerConnectionConfig config;
     config.rolling_buffer_duration_sec = options.rolling_buffer_sec;
     config.expected_bitrate_bps = options.expected_bitrate_bps;
     config.disable_twcc = options.disable_twcc;
     config.enable_datachannel = options.detections_enabled;
     for (const auto& ice : options.ice_servers) {
-        zero_mini::webrtc_net::IceServerConfig server;
+        ipc_mini::webrtc_net::IceServerConfig server;
         server.urls = ice.urls;
         server.username = ice.username;
         server.credential = ice.credential;
@@ -213,4 +213,4 @@ WebRtcPlugin::Impl::peer_config() const
     return config;
 }
 
-} // namespace zero_ipc::protocol
+} // namespace ipc_mini::protocol

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 
 namespace {
 media::Codec codec_from_mode(const std::string& mode)
@@ -12,7 +12,7 @@ media::Codec codec_from_mode(const std::string& mode)
 }
 
 media::FrameKind kind_from_type(uint32_t type, media::Codec codec,
-                                 const zero_ipc::util::stream_head& head)
+                                 const ipc_mini::util::stream_head& head)
 {
     /* STREAM_* are preprocessor macros, not namespaced enumerators. */
     if (type == STREAM_AUDIO_FRAME) {
@@ -155,8 +155,8 @@ bool EncodedStreamChannel::register_audio_tracks(
     return true;
 }
 
-void EncodedStreamChannel::on_stream_come(zero_ipc::util::stream_obj_ptr sobj,
-                                          zero_ipc::util::stream_head* head,
+void EncodedStreamChannel::on_stream_come(ipc_mini::util::stream_obj_ptr sobj,
+                                          ipc_mini::util::stream_head* head,
                                           const char* buf, int32_t len)
 {
     /* HiSilicon venc callback stack is tiny — no printf/chrono/heavy work here. */
@@ -206,8 +206,8 @@ void EncodedStreamChannel::on_stream_come(zero_ipc::util::stream_obj_ptr sobj,
     }
 }
 
-void EncodedStreamChannel::on_stream_error(zero_ipc::util::stream_obj_ptr, int32_t)
+void EncodedStreamChannel::on_stream_error(ipc_mini::util::stream_obj_ptr, int32_t)
 {
 }
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

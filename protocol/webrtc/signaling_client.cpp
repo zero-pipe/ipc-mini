@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 namespace {
 
 
@@ -245,4 +245,4 @@ void SignalingClient::on_message(const std::string& text)
     }
 }
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <utility>
 
-namespace zero_ipc::config {
+namespace ipc_mini::config {
 namespace {
 
 constexpr long kMaxConfigBytes = 64 * 1024;
@@ -433,21 +433,21 @@ void apply_inherit_modes(StreamsConfig& streams)
     }
 }
 
-bool load_zero_mini_json(const std::string& path, RuntimeConfig& config,
-                         std::string& error)
+bool load_ipc_mini_json(const std::string& path, RuntimeConfig& config,
+                        std::string& error)
 {
     Json::Value root;
     if (!read_json(path, root, error)) {
         return false;
     }
     if (!root.isObject()) {
-        error = "zero_mini.json: root must be an object";
+        error = "ipc_mini.json: root must be an object";
         return false;
     }
 
     const Json::Value& sensor = root["sensor"];
     if (!sensor.isObject()) {
-        error = "zero_mini.json: missing sensor";
+        error = "ipc_mini.json: missing sensor";
         return false;
     }
     if (!required_string(sensor, "sensor", "name", config.sensor.name, error) ||
@@ -479,7 +479,7 @@ bool load_zero_mini_json(const std::string& path, RuntimeConfig& config,
 
     const Json::Value& streams = root["streams"];
     if (!streams.isObject()) {
-        error = "zero_mini.json: missing streams";
+        error = "ipc_mini.json: missing streams";
         return false;
     }
     EncodedStreamConfig main_defaults;
@@ -520,7 +520,7 @@ bool load_zero_mini_json(const std::string& path, RuntimeConfig& config,
     }
 
     if (!root.isMember("webrtc")) {
-        error = "zero_mini.json: missing webrtc";
+        error = "ipc_mini.json: missing webrtc";
         return false;
     }
     if (!parse_webrtc(root["webrtc"], "webrtc", config.webrtc, error)) {
@@ -684,9 +684,9 @@ bool load_runtime_config(const std::string& directory,
                          RuntimeConfig& config,
                          std::string& error)
 {
-    const std::string unified = path_join(directory, "zero_mini.json");
+    const std::string unified = path_join(directory, "ipc_mini.json");
     if (file_is_regular(unified)) {
-        return load_zero_mini_json(unified, config, error);
+        return load_ipc_mini_json(unified, config, error);
     }
     return load_legacy_files(directory, config, error);
 }
@@ -695,12 +695,16 @@ void resolve_runtime_paths(RuntimeConfig& config,
                            const std::string& install_root)
 {
     auto resolve = [&install_root](std::string path) {
-        static constexpr char kLegacy[] = "/opt/zero_mini";
+        static constexpr char kLegacyZeroMini[] = "/opt/zero_mini";
+        static constexpr char kLegacyIpcMini[] = "/opt/ipc_mini";
         if (path.empty()) {
             return path;
         }
-        if (path.rfind(kLegacy, 0) == 0) {
-            return install_root + path.substr(sizeof(kLegacy) - 1);
+        if (path.rfind(kLegacyIpcMini, 0) == 0) {
+            return install_root + path.substr(sizeof(kLegacyIpcMini) - 1);
+        }
+        if (path.rfind(kLegacyZeroMini, 0) == 0) {
+            return install_root + path.substr(sizeof(kLegacyZeroMini) - 1);
         }
         if (path[0] == '/') {
             return path;
@@ -733,4 +737,4 @@ std::string format_streams_summary(const RuntimeConfig& config)
     return buffer;
 }
 
-} // namespace zero_ipc::config
+} // namespace ipc_mini::config

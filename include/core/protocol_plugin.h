@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <memory>
 
-namespace zero_ipc::core {
+namespace ipc_mini::core {
 
 /**
  * Shared runtime injected into every protocol plugin (DIP / LoD).
@@ -31,4 +31,4 @@ public:
     virtual void stop() = 0;
 };
 
-} // namespace zero_ipc::core
+} // namespace ipc_mini::core

@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-namespace zero_ipc::device_adapter {
+namespace ipc_mini::device_adapter {
 namespace {
 
-media::FrameKind h264_kind(const zero_ipc::util::stream_head& head)
+media::FrameKind h264_kind(const ipc_mini::util::stream_head& head)
 {
     const uint32_t count =
         std::min<uint32_t>(head.nalu_count, MAX_STREAM_NALU_COUNT);
@@ -55,8 +55,8 @@ bool AiStreamPublisher::register_track(int width, int height, int frame_rate)
 }
 
 void AiStreamPublisher::on_stream_come(
-    zero_ipc::util::stream_obj_ptr stream,
-    zero_ipc::util::stream_head* head,
+    ipc_mini::util::stream_obj_ptr stream,
+    ipc_mini::util::stream_head* head,
     const char*, int32_t)
 {
     if (!media_source_ || !stream || !head ||
@@ -93,8 +93,8 @@ void AiStreamPublisher::on_stream_come(
 }
 
 void AiStreamPublisher::on_stream_error(
-    zero_ipc::util::stream_obj_ptr, int32_t)
+    ipc_mini::util::stream_obj_ptr, int32_t)
 {
 }
 
-} // namespace zero_ipc::device_adapter
+} // namespace ipc_mini::device_adapter

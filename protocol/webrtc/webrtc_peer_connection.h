@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 
 struct IceServerConfig {
     std::string urls;  // stun:host:3478  or  turn:host:3478?transport=udp
@@ -32,7 +32,7 @@ struct PeerConnectionConfig {
 
 /**
  * One WebRTC PeerConnection (SDP / ICE / RTP / DataChannel).
- * Media stack is Amazon KVS WebRTC when built with ZERO_MINI_ENABLE_KVS=1.
+ * Media stack is Amazon KVS WebRTC when built with IPC_MINI_ENABLE_KVS=1.
  * Without KVS, methods return false / no-op so signaling bring-up still builds.
  */
 class WebRtcPeerConnection final {
@@ -60,9 +60,9 @@ public:
                                  const std::string& sdp_mid,
                                  int sdp_mline_index);
 
-    bool write_video_frame(const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame);
-    bool write_audio_frame(const std::shared_ptr<const zero_ipc::media::MediaFrame>& frame);
-    bool send_detections(const zero_ipc::media::DetectionResult& detections);
+    bool write_video_frame(const std::shared_ptr<const ipc_mini::media::MediaFrame>& frame);
+    bool write_audio_frame(const std::shared_ptr<const ipc_mini::media::MediaFrame>& frame);
+    bool send_detections(const ipc_mini::media::DetectionResult& detections);
 
     void set_local_candidate_handler(LocalCandidateHandler handler);
     void set_local_sdp_handler(LocalSdpHandler handler);
@@ -106,4 +106,4 @@ private:
 
 bool kvs_runtime_available();
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

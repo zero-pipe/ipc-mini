@@ -11,7 +11,7 @@
 struct ztk_poller;
 struct ztk_poller_timer;
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 
 struct SignalingConfig {
     std::string url{"ws://127.0.0.1:8089/ws"};
@@ -59,4 +59,4 @@ private:
     std::string assigned_id_;
 };
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

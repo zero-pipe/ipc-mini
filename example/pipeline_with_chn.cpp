@@ -113,8 +113,8 @@ public:
      * 必须像 copy_encoded_frame() 那样在回调内深拷贝。这里的 fwrite() 也在
      * 回调返回前完成，所以是安全的。
      */
-    void on_stream_come(zero_ipc::util::stream_obj_ptr sobj,
-                        zero_ipc::util::stream_head* head,
+    void on_stream_come(ipc_mini::util::stream_obj_ptr sobj,
+                        ipc_mini::util::stream_head* head,
                         const char* /*audio_data*/,
                         int32_t /*audio_size*/) override
     {
@@ -156,7 +156,7 @@ public:
         }
     }
 
-    void on_stream_error(zero_ipc::util::stream_obj_ptr,
+    void on_stream_error(ipc_mini::util::stream_obj_ptr,
                          int32_t error_code) override
     {
         std::fprintf(stderr, "[pipeline_with_chn] stream error=%d\n", error_code);
@@ -173,7 +173,7 @@ private:
 int main()
 {
     // -------------------------------------------------------------------------
-    // 3. 本示例使用项目 rootfs 默认配置对应的参数。
+    // 3. 本示例使用项目 ipc_mini 默认配置对应的参数。
     //
     // Sensor 输出：SC4336P，2560x1440，30 fps，MIPI RAW Bayer
     // 编码输出   ：H.264 CBR，1280x720，15 fps，800 kbps

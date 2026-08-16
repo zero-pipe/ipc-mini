@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace zero_ipc::config {
+namespace ipc_mini::config {
 
 struct SensorConfig {
     std::string name{"SC4336P"};
@@ -66,4 +66,4 @@ void resolve_runtime_paths(RuntimeConfig& config,
 
 std::string format_streams_summary(const RuntimeConfig& config);
 
-} // namespace zero_ipc::config
+} // namespace ipc_mini::config

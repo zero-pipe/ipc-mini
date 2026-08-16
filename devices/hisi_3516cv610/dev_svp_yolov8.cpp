@@ -179,7 +179,7 @@ static std::vector<std::string> g_yolov8_class_str = {"person", "bicycle", "car"
         int32_t nalu_cnt = 0;
         uint64_t time_stamp = 0;
 
-        zero_ipc::util::stream_head sh;
+        ipc_mini::util::stream_head sh;
 
         memset(&sh,0,sizeof(sh));
         sh.type = STREAM_NALU_SLICE;    
@@ -828,7 +828,7 @@ static std::vector<std::string> g_yolov8_class_str = {"person", "bicycle", "car"
         ori_size = svp_acl_get_data_buffer_size(data_buffer);
         ori_stride = svp_acl_get_data_buffer_stride(data_buffer);
 
-        zero_ipc::util::check_interval ci;
+        ipc_mini::util::check_interval ci;
         std::shared_ptr<osd_name> osd_info[SVP_RECT_NUM];
         unsigned empty_n = 0;
         while(m_is_start)

@@ -3,7 +3,7 @@
 #include <json/json.h>
 #include <string>
 
-namespace zero_mini::webrtc_net {
+namespace ipc_mini::webrtc_net {
 
 /**
  * JSON helpers for signaling wire text and PeerConnection callback payloads.
@@ -30,4 +30,4 @@ bool get_optional_int(const Json::Value& object,
                       int& value,
                       std::string& error);
 
-} // namespace zero_mini::webrtc_net
+} // namespace ipc_mini::webrtc_net

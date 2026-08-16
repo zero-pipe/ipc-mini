@@ -10,7 +10,7 @@
 #include <limits>
 #include <vector>
 
-namespace zero_ipc::packaging {
+namespace ipc_mini::packaging {
 
 namespace {
 
@@ -223,4 +223,4 @@ bool Mp4Muxer::finalize(MuxedDataSink output)
     return output(context_->file.bytes.data(), context_->file.bytes.size());
 }
 
-} // namespace zero_ipc::packaging
+} // namespace ipc_mini::packaging
