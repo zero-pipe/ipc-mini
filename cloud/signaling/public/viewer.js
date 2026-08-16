@@ -16,6 +16,11 @@
       talk: $('talk'),
       talkSide: $('talkSide'),
       muteSide: $('muteSide'),
+      modeLive: $('modeLive'),
+      modeReplay: $('modeReplay'),
+      replayBar: $('replayBar'),
+      replayDay: $('replayDay'),
+      replayStatus: $('replayStatus'),
     };
 
     const iceServers = [
@@ -38,6 +43,10 @@
     let offerStarted = false;
     let connectedIntent = false;
     let logRecords = [];
+    let viewMode = 'live';
+    let hlsPlayer = null;
+    let replayToken = 0;
+    let replayFillingDays = false;
 
     function formatValue(value) {
       if (value instanceof Error) return value.message;
@@ -111,8 +120,16 @@
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 8l8 8M16 8l-8 8"/><circle cx="12" cy="12" r="8.5"/></svg><span id="goLabel">断开</span>`
         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m10 8.8 6 3.2-6 3.2z" fill="currentColor" stroke="none"/></svg><span id="goLabel">观看</span>`;
       ui.goLabel = $('goLabel');
-      ui.room.disabled = connectedIntent;
-      ui.wsUrl.disabled = connectedIntent;
+      ui.room.disabled = connectedIntent || viewMode === 'replay';
+      ui.wsUrl.disabled = connectedIntent || viewMode === 'replay';
+      if (viewMode === 'replay') {
+        ui.goLabel.textContent = '刷新';
+        ui.go.classList.remove('disconnect');
+        ui.go.setAttribute('aria-label', '刷新回放列表');
+        ui.go.innerHTML =
+          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.2-5.5"/><path d="M20 4v6h-6"/></svg><span id="goLabel">刷新</span>`;
+        ui.goLabel = $('goLabel');
+      }
     }
 
     function clearCanvas() {
@@ -540,9 +557,271 @@
     ui.talk.addEventListener('click', onTalkClick);
     ui.talkSide.addEventListener('click', onTalkClick);
 
+    function recordBaseUrl() {
+      const room = encodeURIComponent(ui.room.value.trim() || 'door-1');
+      return `${location.origin}/record/${room}`;
+    }
+
+    function setReplayStatus(text) {
+      ui.replayStatus.textContent = text;
+    }
+
+    function stopReplay() {
+      replayToken += 1;
+      if (hlsPlayer) {
+        try { hlsPlayer.destroy(); } catch (_) {}
+        hlsPlayer = null;
+      }
+      ui.video.pause();
+      ui.video.removeAttribute('src');
+      ui.video.srcObject = null;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error(src));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function ensureHls() {
+      if (window.Hls) {
+        return;
+      }
+      const sources = [
+        'https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js',
+        'https://cdn.bootcdn.net/ajax/libs/hls.js/1.5.20/hls.min.js',
+      ];
+      for (const src of sources) {
+        try {
+          await loadScript(src);
+          if (window.Hls) {
+            return;
+          }
+        } catch (_) {}
+      }
+    }
+
+    async function playPlaylist(url) {
+      const token = ++replayToken;
+      if (hlsPlayer) {
+        try { hlsPlayer.destroy(); } catch (_) {}
+        hlsPlayer = null;
+      }
+      ui.video.pause();
+      ui.video.removeAttribute('src');
+      ui.video.srcObject = null;
+      ui.liveBadge.classList.remove('visible');
+      $('metricVideo').textContent = '回放中';
+      $('metricData').textContent = '录像';
+      setReplayStatus('正在加载…');
+      showEmpty('正在加载录像…');
+      log('info', '打开播放列表', url);
+
+      let segmentCount = 0;
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const text = await response.text();
+        segmentCount = text.split(/\r?\n/).filter((line) =>
+          /\.m4s$/i.test(line.trim())).length;
+        log('info', '播放列表切片', segmentCount);
+        if (segmentCount === 0) {
+          setReplayStatus('还没有切片，等第一段关完再刷新');
+          showEmpty('还没有可播切片');
+          return;
+        }
+      } catch (error) {
+        setReplayStatus('无法读取播放列表');
+        showEmpty('无法读取播放列表');
+        log('error', '读取播放列表失败：', error);
+        return;
+      }
+      if (token !== replayToken || viewMode !== 'replay') {
+        return;
+      }
+
+      await ensureHls();
+      if (token !== replayToken || viewMode !== 'replay') {
+        return;
+      }
+
+      const startPlayback = () => {
+        if (token !== replayToken) {
+          return;
+        }
+        setMuteUi(true);
+        ui.video.play().then(() => {
+          if (token !== replayToken) {
+            return;
+          }
+          ui.empty.classList.add('hidden');
+          setReplayStatus(`播放中 · ${segmentCount} 段`);
+          setGlobalState('回放', 'online');
+          log('success', '回放已开始');
+        }).catch((error) => {
+          if (token !== replayToken) {
+            return;
+          }
+          log('warn', '回放自动播放被拦截：', error);
+          setReplayStatus('点画面开始播放');
+          showEmpty('点画面开始播放');
+        });
+      };
+
+      const canNative = ui.video.canPlayType('application/vnd.apple.mpegurl');
+      if (window.Hls?.isSupported()) {
+        hlsPlayer = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          startPosition: 0,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 8,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 90,
+          manifestLoadingTimeOut: 15000,
+          fragLoadingTimeOut: 60000,
+        });
+        hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+          setReplayStatus(`已加载 ${segmentCount} 段，正在缓冲…`);
+          startPlayback();
+        });
+        hlsPlayer.on(Hls.Events.FRAG_BUFFERED, () => {
+          if (token !== replayToken) {
+            return;
+          }
+          ui.empty.classList.add('hidden');
+        });
+        hlsPlayer.on(Hls.Events.ERROR, (_, data) => {
+          if (token !== replayToken || !data?.fatal) {
+            return;
+          }
+          setReplayStatus('回放失败');
+          showEmpty('回放失败');
+          log('error', 'HLS 回放失败：', data.type, data.details);
+        });
+        hlsPlayer.loadSource(url);
+        hlsPlayer.attachMedia(ui.video);
+        return;
+      }
+      if (canNative) {
+        ui.video.src = url;
+        startPlayback();
+        setReplayStatus('浏览器原生播放');
+        return;
+      }
+      setReplayStatus('当前浏览器不支持 HLS');
+      showEmpty('当前浏览器不支持回放');
+      log('error', '当前浏览器不支持 MSE HLS，也无法原生播放 m3u8');
+    }
+
+    async function loadReplayDays() {
+      const url = recordBaseUrl();
+      setReplayStatus('正在列出录像…');
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const body = await response.json();
+        const days = (body.files || [])
+          .filter((name) => /^\d{4}-\d{2}-\d{2}$/.test(name))
+          .sort()
+          .reverse();
+        replayFillingDays = true;
+        ui.replayDay.replaceChildren();
+        if (!days.length) {
+          replayFillingDays = false;
+          setReplayStatus('还没有可回放的录像');
+          showEmpty('暂无录像');
+          log('warn', '云端还没有录像目录');
+          return;
+        }
+        for (const day of days) {
+          const option = document.createElement('option');
+          option.value = day;
+          option.textContent = day;
+          ui.replayDay.appendChild(option);
+        }
+        const selected = days[0];
+        ui.replayDay.value = selected;
+        replayFillingDays = false;
+        log('info', '回放日期：', days.join(', '));
+        playPlaylist(`${url}/${selected}/index.m3u8`);
+      } catch (error) {
+        setReplayStatus('无法列出录像');
+        showEmpty('无法读取录像');
+        log('error', '列出录像失败：', error);
+      }
+    }
+
+    function setViewMode(mode) {
+      if (mode === viewMode) {
+        return;
+      }
+      viewMode = mode;
+      const replay = mode === 'replay';
+      ui.modeLive.classList.toggle('active', !replay);
+      ui.modeReplay.classList.toggle('active', replay);
+      ui.modeLive.setAttribute('aria-selected', String(!replay));
+      ui.modeReplay.setAttribute('aria-selected', String(replay));
+      ui.replayBar.classList.toggle('hidden', !replay);
+      ui.talk.hidden = replay;
+      ui.talkSide.hidden = replay;
+      ui.talkSide.disabled = replay || !pc;
+      if (replay) {
+        if (connectedIntent) {
+          disconnect('切换到回放');
+        }
+        ui.canvas.style.display = 'none';
+        clearCanvas();
+        setGlobalState('回放', 'working');
+        showEmpty('正在加载录像…');
+        updateButton();
+        loadReplayDays();
+      } else {
+        stopReplay();
+        ui.canvas.style.display = '';
+        ui.video.srcObject = null;
+        $('metricVideo').textContent = '未接收';
+        $('metricData').textContent = '未连接';
+        setReplayStatus('选择日期后播放');
+        setGlobalState('未连接');
+        showEmpty('等待连接');
+        updateButton();
+      }
+    }
+
     ui.go.addEventListener('click', () => {
+      if (viewMode === 'replay') {
+        loadReplayDays();
+        return;
+      }
       if (connectedIntent) disconnect();
       else connect();
+    });
+
+    ui.modeLive.addEventListener('click', () => setViewMode('live'));
+    ui.modeReplay.addEventListener('click', () => setViewMode('replay'));
+    ui.replayDay.addEventListener('change', () => {
+      if (replayFillingDays) {
+        return;
+      }
+      const day = ui.replayDay.value;
+      if (!day) return;
+      playPlaylist(`${recordBaseUrl()}/${day}/index.m3u8`);
+    });
+
+    ui.video.addEventListener('click', () => {
+      if (viewMode !== 'replay') {
+        return;
+      }
+      ui.video.play().catch(() => {});
     });
 
     $('fullscreen').addEventListener('click', requestFullscreen);
@@ -570,7 +849,11 @@
     window.addEventListener('beforeunload', () => {
       try { ws?.close(); } catch (_) {}
       try { pc?.close(); } catch (_) {}
+      stopReplay();
     });
 
     updateButton();
     log('info', '页面已就绪');
+    if (location.hash === '#replay') {
+      setViewMode('replay');
+    }

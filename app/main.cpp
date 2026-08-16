@@ -257,6 +257,8 @@ int main(int argc, char** argv)
         record.audio = runtime_config.record.audio &&
             runtime_config.audio.enable;
         record.segment_sec = runtime_config.record.segment_sec;
+        record.retain_sec = runtime_config.record.retain_sec;
+        record.max_bytes_mb = runtime_config.record.max_bytes_mb;
         record.directory = runtime_config.record.directory;
         record.upload_url = runtime_config.record.upload_url;
         record.upload_token = runtime_config.record.upload_token.empty()
@@ -269,9 +271,12 @@ int main(int argc, char** argv)
     std::printf("[ipc_mini] streams %s\n",
                 config::format_streams_summary(runtime_config).c_str());
     if (runtime_config.record.enable) {
-        std::printf("[ipc_mini] record on stream=%s segment=%ds dir=%s%s\n",
+        std::printf("[ipc_mini] record on stream=%s segment=%ds retain=%ds "
+                    "max=%dMB dir=%s%s\n",
                     runtime_config.record.stream.c_str(),
                     runtime_config.record.segment_sec,
+                    runtime_config.record.retain_sec,
+                    runtime_config.record.max_bytes_mb,
                     runtime_config.record.directory.c_str(),
                     runtime_config.record.upload_url.empty()
                         ? ""

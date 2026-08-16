@@ -14,9 +14,47 @@ const MAX_PUT_BYTES = 64 * 1024 * 1024;
 
 function cors(res) {
   res.setHeader("access-control-allow-origin", "*");
-  res.setHeader("access-control-allow-methods", "GET, HEAD, PUT, OPTIONS");
+  res.setHeader("access-control-allow-methods", "GET, HEAD, PUT, DELETE, OPTIONS");
   res.setHeader("access-control-allow-headers", "content-type, x-record-token");
   res.setHeader("access-control-expose-headers", "content-length, content-range, accept-ranges");
+}
+
+function listedMediaFromPlaylist(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#") && /\.m4s$/i.test(line));
+}
+
+function pruneUnlistedSegments(dest) {
+  if (path.basename(dest) !== "index.m3u8") {
+    return;
+  }
+  let text;
+  try {
+    text = fs.readFileSync(dest, "utf8");
+  } catch (_) {
+    return;
+  }
+  const keep = new Set(listedMediaFromPlaylist(text));
+  const dir = path.dirname(dest);
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch (_) {
+    return;
+  }
+  for (const name of names) {
+    if (!/\.m4s$/i.test(name) || keep.has(name)) {
+      continue;
+    }
+    const full = path.join(dir, name);
+    fs.unlink(full, (err) => {
+      if (!err) {
+        console.log(new Date().toISOString(), "record prune", name);
+      }
+    });
+  }
 }
 
 function recordRel(urlPath) {
@@ -65,7 +103,8 @@ function handleRecordRequest(req, res, { recordDir, token }) {
     return false;
   }
 
-  if (req.method === "PUT" && !tokenOk(req, token)) {
+  if ((req.method === "PUT" || req.method === "DELETE") &&
+      !tokenOk(req, token)) {
     res.writeHead(401, { "content-type": "text/plain; charset=utf-8" });
     res.end("unauthorized");
     return true;
@@ -123,6 +162,7 @@ function handleRecordRequest(req, res, { recordDir, token }) {
           return;
         }
         console.log(new Date().toISOString(), "record put", rel, length);
+        pruneUnlistedSegments(dest);
         res.writeHead(201, { "content-type": "application/json" });
         res.end(JSON.stringify({ ok: true, key: rel, bytes: length }));
       });
@@ -130,8 +170,45 @@ function handleRecordRequest(req, res, { recordDir, token }) {
     return true;
   }
 
+  if (req.method === "DELETE") {
+    if (!rel) {
+      res.writeHead(400);
+      res.end("missing object key");
+      return true;
+    }
+    const dest = resolveRecordPath(recordDir, rel);
+    if (!dest) {
+      res.writeHead(403);
+      res.end("forbidden");
+      return true;
+    }
+    fs.stat(dest, (err, st) => {
+      if (err) {
+        res.writeHead(404);
+        res.end("not found");
+        return;
+      }
+      const finish = (unlinkErr) => {
+        if (unlinkErr) {
+          res.writeHead(500);
+          res.end("delete failed");
+          return;
+        }
+        console.log(new Date().toISOString(), "record delete", rel);
+        res.writeHead(204);
+        res.end();
+      };
+      if (st.isDirectory()) {
+        fs.rmdir(dest, finish);
+        return;
+      }
+      fs.unlink(dest, finish);
+    });
+    return true;
+  }
+
   if (req.method !== "GET" && req.method !== "HEAD") {
-    res.writeHead(405, { allow: "GET, HEAD, PUT, OPTIONS" });
+    res.writeHead(405, { allow: "GET, HEAD, PUT, DELETE, OPTIONS" });
     res.end("method not allowed");
     return true;
   }
@@ -156,13 +233,20 @@ function handleRecordRequest(req, res, { recordDir, token }) {
           res.end("list failed");
           return;
         }
-        res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify({ path: rel || ".", files: names }));
+        const files = names.filter((name) => !name.startsWith(".") && !name.endsWith(".part"));
+        res.writeHead(200, {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-cache",
+        });
+        res.end(JSON.stringify({ path: rel || ".", files }));
       });
       return;
     }
     const ext = path.extname(dest).toLowerCase();
     const type = MIME[ext] || "application/octet-stream";
+    if (ext === ".m3u8") {
+      res.setHeader("cache-control", "no-cache, no-store, must-revalidate");
+    }
     const range = req.headers.range;
     if (range) {
       const match = /^bytes=(\d*)-(\d*)$/.exec(range);

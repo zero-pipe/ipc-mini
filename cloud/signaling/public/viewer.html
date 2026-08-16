@@ -191,6 +191,71 @@
 
     .live-badge.visible { display: inline-flex; }
 
+    .mode-switch {
+      display: inline-flex;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f3f8fe;
+      gap: 2px;
+    }
+
+    .mode-btn {
+      min-height: 28px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .mode-btn.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(30, 77, 125, .1);
+    }
+
+    .replay-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbff;
+    }
+
+    .replay-bar.hidden { display: none; }
+
+    .replay-bar label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .replay-bar select {
+      min-height: 34px;
+      min-width: 10em;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .replay-status {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .live-badge::before {
       content: "";
       width: 6px;
@@ -222,6 +287,8 @@
     }
 
     .icon-btn svg { width: 18px; height: 18px; }
+
+    .icon-btn[hidden] { display: none !important; }
 
     .icon-btn:hover:not(:disabled) {
       border-color: var(--line-strong);
@@ -462,6 +529,8 @@
       line-height: 1.2;
     }
 
+    .quick-btn[hidden] { display: none !important; }
+
     .quick-btn:hover:not(:disabled) {
       border-color: var(--line-strong);
       background: var(--surface-soft);
@@ -680,6 +749,10 @@
               <path d="m17 10 3.5-2v8L17 14z" />
             </svg>
             <span id="liveBadge" class="live-badge">LIVE</span>
+            <div class="mode-switch" role="tablist" aria-label="观看模式">
+              <button id="modeLive" class="mode-btn active" type="button" role="tab" aria-selected="true">实时</button>
+              <button id="modeReplay" class="mode-btn" type="button" role="tab" aria-selected="false">回放</button>
+            </div>
           </div>
           <div class="toolbar-actions">
             <button id="talk" class="icon-btn" type="button" disabled data-tip="对讲" aria-label="对讲" title="对讲">
@@ -694,6 +767,12 @@
               </svg>
             </button>
           </div>
+        </div>
+
+        <div id="replayBar" class="replay-bar hidden">
+          <label for="replayDay">日期</label>
+          <select id="replayDay"></select>
+          <span id="replayStatus" class="replay-status">选择日期后播放</span>
         </div>
 
         <div id="stage" class="stage">

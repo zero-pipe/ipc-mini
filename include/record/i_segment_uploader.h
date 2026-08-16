@@ -9,6 +9,7 @@ public:
     virtual ~ISegmentUploader() = default;
     virtual void enqueue(const std::string& local_path,
                          const std::string& object_key) = 0;
+    virtual void enqueue_delete(const std::string& object_key) = 0;
     virtual void stop() = 0;
 };
 

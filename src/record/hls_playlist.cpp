@@ -9,6 +9,7 @@ bool HlsPlaylist::begin(const std::string& path, int target_duration_sec)
 {
     path_ = path;
     target_duration_sec_ = target_duration_sec > 0 ? target_duration_sec : 300;
+    media_sequence_ = 0;
     entries_.clear();
     ended_ = false;
     return rewrite();
@@ -25,7 +26,24 @@ void HlsPlaylist::append(const std::string& filename, double duration_sec)
         target_duration_sec_ = rounded;
     }
     entries_.emplace_back(filename, duration);
+    ended_ = false;
     rewrite();
+}
+
+bool HlsPlaylist::drop_front_if(const std::string& filename)
+{
+    if (entries_.empty() || entries_.front().first != filename) {
+        return false;
+    }
+    entries_.erase(entries_.begin());
+    ++media_sequence_;
+    rewrite();
+    return true;
+}
+
+std::string HlsPlaylist::front_name() const
+{
+    return entries_.empty() ? std::string() : entries_.front().first;
 }
 
 void HlsPlaylist::finish()
@@ -52,11 +70,10 @@ bool HlsPlaylist::rewrite() const
                  "#EXTM3U\n"
                  "#EXT-X-VERSION:7\n"
                  "#EXT-X-TARGETDURATION:%d\n"
-                 "#EXT-X-MEDIA-SEQUENCE:0\n"
-                 "#EXT-X-PLAYLIST-TYPE:EVENT\n"
+                 "#EXT-X-MEDIA-SEQUENCE:%d\n"
                  "#EXT-X-INDEPENDENT-SEGMENTS\n"
                  "#EXT-X-MAP:URI=\"init.mp4\"\n",
-                 target_duration_sec_);
+                 target_duration_sec_, media_sequence_);
     for (const auto& entry : entries_) {
         std::fprintf(file, "#EXTINF:%.3f,\n%s\n", entry.second,
                      entry.first.c_str());

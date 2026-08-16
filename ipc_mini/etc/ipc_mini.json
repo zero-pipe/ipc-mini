@@ -65,7 +65,9 @@
     "stream": "main",
     "audio": true,
     "segment_sec": 180,
-    "directory": "/mnt/record",
+    "retain_sec": 3600,
+    "max_bytes_mb": 200,
+    "directory": "/mnt/sdcard/record",
     "upload_url": "http://114.55.94.148:8089/record/door-1",
     "upload_token": ""
   },

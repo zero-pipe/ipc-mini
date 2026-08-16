@@ -97,6 +97,56 @@ bool send_all(int fd, const void* data, std::size_t size)
     return true;
 }
 
+int connect_http(const ParsedUrl& base)
+{
+    addrinfo hints{};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    addrinfo* info = nullptr;
+    const std::string port = std::to_string(base.port);
+    if (getaddrinfo(base.host.c_str(), port.c_str(), &hints, &info) != 0 ||
+        !info) {
+        return -1;
+    }
+
+    int fd = -1;
+    for (addrinfo* cur = info; cur; cur = cur->ai_next) {
+        fd = static_cast<int>(::socket(cur->ai_family, cur->ai_socktype,
+                                       cur->ai_protocol));
+        if (fd < 0) {
+            continue;
+        }
+        timeval timeout{};
+        timeout.tv_sec = kPutTimeoutSec;
+        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        if (::connect(fd, cur->ai_addr, cur->ai_addrlen) == 0) {
+            break;
+        }
+        ::close(fd);
+        fd = -1;
+    }
+    freeaddrinfo(info);
+    return fd;
+}
+
+bool status_ok(int fd, bool accept_not_found)
+{
+    char response[256]{};
+    const ssize_t got = ::recv(fd, response, sizeof(response) - 1, 0);
+    if (got <= 0) {
+        return false;
+    }
+    int status = 0;
+    if (std::sscanf(response, "HTTP/%*s %d", &status) != 1) {
+        return false;
+    }
+    if (status >= 200 && status < 300) {
+        return true;
+    }
+    return accept_not_found && status == 404;
+}
+
 bool put_once(const ParsedUrl& base, const std::string& token,
               const std::string& local_path, const std::string& object_key)
 {
@@ -127,34 +177,7 @@ bool put_once(const ParsedUrl& base, const std::string& token,
     }
     request += "\r\n";
 
-    addrinfo hints{};
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    addrinfo* info = nullptr;
-    const std::string port = std::to_string(base.port);
-    if (getaddrinfo(base.host.c_str(), port.c_str(), &hints, &info) != 0 ||
-        !info) {
-        return false;
-    }
-
-    int fd = -1;
-    for (addrinfo* cur = info; cur; cur = cur->ai_next) {
-        fd = static_cast<int>(::socket(cur->ai_family, cur->ai_socktype,
-                                       cur->ai_protocol));
-        if (fd < 0) {
-            continue;
-        }
-        timeval timeout{};
-        timeout.tv_sec = kPutTimeoutSec;
-        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        if (::connect(fd, cur->ai_addr, cur->ai_addrlen) == 0) {
-            break;
-        }
-        ::close(fd);
-        fd = -1;
-    }
-    freeaddrinfo(info);
+    const int fd = connect_http(base);
     if (fd < 0) {
         return false;
     }
@@ -169,18 +192,41 @@ bool put_once(const ParsedUrl& base, const std::string& token,
         }
         ok = send_all(fd, chunk, n);
     }
-
-    char response[256]{};
-    const ssize_t got = ok ? ::recv(fd, response, sizeof(response) - 1, 0) : -1;
+    ok = ok && status_ok(fd, false);
     ::close(fd);
-    if (got <= 0) {
+    return ok;
+}
+
+bool delete_once(const ParsedUrl& base, const std::string& token,
+                 const std::string& object_key)
+{
+    const std::string path = join_url_path(base.path, object_key);
+    char header[1024];
+    int header_len = std::snprintf(
+        header, sizeof(header),
+        "DELETE %s HTTP/1.1\r\n"
+        "Host: %s:%d\r\n"
+        "Content-Length: 0\r\n"
+        "Connection: close\r\n",
+        path.c_str(), base.host.c_str(), base.port);
+    if (header_len <= 0 ||
+        static_cast<std::size_t>(header_len) >= sizeof(header)) {
         return false;
     }
-    int status = 0;
-    if (std::sscanf(response, "HTTP/%*s %d", &status) != 1) {
+    std::string request(header, static_cast<std::size_t>(header_len));
+    if (!token.empty()) {
+        request += "X-Record-Token: " + token + "\r\n";
+    }
+    request += "\r\n";
+
+    const int fd = connect_http(base);
+    if (fd < 0) {
         return false;
     }
-    return status >= 200 && status < 300;
+    const bool ok = send_all(fd, request.data(), request.size()) &&
+        status_ok(fd, true);
+    ::close(fd);
+    return ok;
 }
 
 } // namespace
@@ -208,7 +254,22 @@ void HttpSegmentUploader::enqueue(const std::string& local_path,
                      object_key.c_str());
         return;
     }
-    queue_.push_back(Item{local_path, object_key});
+    queue_.push_back(Item{local_path, object_key, false});
+    cv_.notify_one();
+}
+
+void HttpSegmentUploader::enqueue_delete(const std::string& object_key)
+{
+    if (object_key.empty() || stopping_.load()) {
+        return;
+    }
+    std::lock_guard lock(mutex_);
+    if (queue_.size() >= kMaxQueued) {
+        std::fprintf(stderr, "[record] upload queue full, drop delete %s\n",
+                     object_key.c_str());
+        return;
+    }
+    queue_.push_back(Item{"", object_key, true});
     cv_.notify_one();
 }
 
@@ -241,18 +302,22 @@ void HttpSegmentUploader::worker_loop()
         }
         bool ok = false;
         for (int attempt = 1; attempt <= kMaxRetries; ++attempt) {
-            if (put_file(item)) {
-                ok = true;
+            ok = item.remove ? delete_object(item) : put_file(item);
+            if (ok) {
                 break;
             }
-            std::fprintf(stderr, "[record] upload retry %d/%d %s\n",
-                         attempt, kMaxRetries, item.object_key.c_str());
+            std::fprintf(stderr, "[record] %s retry %d/%d %s\n",
+                         item.remove ? "delete" : "upload", attempt,
+                         kMaxRetries, item.object_key.c_str());
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         if (ok) {
-            std::printf("[record] uploaded %s\n", item.object_key.c_str());
+            std::printf("[record] %s %s\n",
+                        item.remove ? "deleted" : "uploaded",
+                        item.object_key.c_str());
         } else {
-            std::fprintf(stderr, "[record] upload failed %s\n",
+            std::fprintf(stderr, "[record] %s failed %s\n",
+                         item.remove ? "delete" : "upload",
                          item.object_key.c_str());
         }
     }
@@ -267,6 +332,15 @@ bool HttpSegmentUploader::put_file(const Item& item) const
         return false;
     }
     return put_once(url, token_, item.local_path, item.object_key);
+}
+
+bool HttpSegmentUploader::delete_object(const Item& item) const
+{
+    ParsedUrl url;
+    if (!parse_http_url(base_url_, url)) {
+        return false;
+    }
+    return delete_once(url, token_, item.object_key);
 }
 
 } // namespace ipc_mini::record

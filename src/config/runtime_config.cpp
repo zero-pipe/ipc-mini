@@ -418,6 +418,10 @@ bool validate_config(const RuntimeConfig& config, std::string& error)
           config.record.stream_id < 0 || config.record.stream_id > 1 ||
           config.record.segment_sec < 5 ||
           config.record.segment_sec > 3600 ||
+          config.record.retain_sec < 0 ||
+          config.record.retain_sec > 7 * 24 * 3600 ||
+          config.record.max_bytes_mb < 0 ||
+          config.record.max_bytes_mb > 8192 ||
           (!config.record.upload_url.empty() &&
            config.record.upload_url.rfind("http://", 0) != 0)))) {
         error = "configuration contains unsupported mode, URL, stream, or numeric value";
@@ -525,6 +529,10 @@ bool load_ipc_mini_json(const std::string& path, RuntimeConfig& config,
                            config.record.audio, error) ||
             !optional_int(record, "record", "segment_sec", 300,
                           config.record.segment_sec, error) ||
+            !optional_int(record, "record", "retain_sec", 3600,
+                          config.record.retain_sec, error) ||
+            !optional_int(record, "record", "max_bytes_mb", 200,
+                          config.record.max_bytes_mb, error) ||
             !optional_string(record, "record", "directory", "/mnt/record",
                              config.record.directory, error) ||
             !optional_string(record, "record", "upload_url", "",
@@ -708,6 +716,11 @@ bool load_legacy_files(const std::string& directory, RuntimeConfig& config,
                            true, config.record.audio, error) ||
             !optional_int(record, "mp4_save_info.json:mp4_save", "segment_sec",
                           300, config.record.segment_sec, error) ||
+            !optional_int(record, "mp4_save_info.json:mp4_save", "retain_sec",
+                          3600, config.record.retain_sec, error) ||
+            !optional_int(record, "mp4_save_info.json:mp4_save",
+                          "max_bytes_mb", 200, config.record.max_bytes_mb,
+                          error) ||
             !optional_string(record, "mp4_save_info.json:mp4_save", "dir",
                              "/mnt/record", config.record.directory, error) ||
             !optional_string(record, "mp4_save_info.json:mp4_save",

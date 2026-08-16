@@ -29,6 +29,8 @@ struct RecordConfig {
     int stream_id{0};
     bool audio{true};
     int segment_sec{300};
+    int retain_sec{3600};
+    int max_bytes_mb{200};
     std::string directory{"/mnt/record"};
     std::string upload_url;
     std::string upload_token;

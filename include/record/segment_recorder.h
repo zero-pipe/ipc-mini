@@ -53,6 +53,21 @@ private:
     std::string next_media_path(const std::string& day_dir,
                                 const std::string& stamp) const;
     void upload_relative(const std::string& absolute_path);
+    void delete_relative(const std::string& absolute_path);
+    std::string relative_key(const std::string& absolute_path) const;
+    void remember_closed_segment(const std::string& path, double duration_sec);
+    void scan_existing_segments();
+    void prune_retained();
+    bool over_retain() const;
+    void rewrite_day_playlist(const std::string& day, bool ended);
+
+    struct KeptSegment {
+        std::string path;
+        std::string filename;
+        std::string day;
+        double duration_sec{0};
+        std::size_t bytes{0};
+    };
 
     RecordConfig config_;
     std::shared_ptr<media::MediaSource> media_source_;
@@ -81,6 +96,7 @@ private:
     std::string current_media_path_;
     int64_t segment_start_pts_ms_{-1};
     int64_t segment_last_pts_ms_{-1};
+    std::deque<KeptSegment> kept_;
 };
 
 } // namespace ipc_mini::record

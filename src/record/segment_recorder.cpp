@@ -6,9 +6,13 @@
 #include <mpeg4-avc.h>
 #include <mpeg4-hevc.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <ctime>
+#include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
 
 namespace ipc_mini::record {
 namespace {
@@ -55,6 +59,8 @@ bool SegmentRecorder::start()
                      config_.directory.c_str());
         return false;
     }
+    scan_existing_segments();
+    prune_retained();
 
     stopping_.store(false);
     writer_ = std::thread([this] { writer_loop(); });
@@ -72,9 +78,11 @@ bool SegmentRecorder::start()
     }
 
     media_source_->request_keyframe(config_.stream_id);
-    std::printf("[record] start stream=%s(%d) audio=%s segment=%ds dir=%s%s\n",
+    std::printf("[record] start stream=%s(%d) audio=%s segment=%ds "
+                "retain=%ds max=%dMB dir=%s%s\n",
                 stream_tag(config_.stream_id), config_.stream_id,
                 config_.audio ? "on" : "off", config_.segment_sec,
+                config_.retain_sec, config_.max_bytes_mb,
                 config_.directory.c_str(),
                 config_.upload_url.empty() ? "" : " upload=on");
     return true;
@@ -255,11 +263,8 @@ std::string SegmentRecorder::next_media_path(const std::string& day_dir,
     return path;
 }
 
-void SegmentRecorder::upload_relative(const std::string& absolute_path)
+std::string SegmentRecorder::relative_key(const std::string& absolute_path) const
 {
-    if (!uploader_ || config_.upload_url.empty() || absolute_path.empty()) {
-        return;
-    }
     const std::string prefix = config_.directory;
     std::string key = absolute_path;
     if (key.rfind(prefix, 0) == 0) {
@@ -268,9 +273,177 @@ void SegmentRecorder::upload_relative(const std::string& absolute_path)
             key.erase(key.begin());
         }
     }
+    return key;
+}
+
+void SegmentRecorder::upload_relative(const std::string& absolute_path)
+{
+    if (!uploader_ || config_.upload_url.empty() || absolute_path.empty()) {
+        return;
+    }
+    const std::string key = relative_key(absolute_path);
     if (!key.empty()) {
         uploader_->enqueue(absolute_path, key);
     }
+}
+
+void SegmentRecorder::delete_relative(const std::string& absolute_path)
+{
+    if (!uploader_ || config_.upload_url.empty() || absolute_path.empty()) {
+        return;
+    }
+    const std::string key = relative_key(absolute_path);
+    if (!key.empty()) {
+        uploader_->enqueue_delete(key);
+    }
+}
+
+void SegmentRecorder::remember_closed_segment(const std::string& path,
+                                              double duration_sec)
+{
+    KeptSegment item;
+    item.path = path;
+    item.filename = filename_of(path);
+    const auto slash = path.find_last_of('/');
+    const std::string parent =
+        slash == std::string::npos ? std::string() : path.substr(0, slash);
+    item.day = filename_of(parent);
+    item.duration_sec = duration_sec;
+    struct stat st {};
+    item.bytes = (::stat(path.c_str(), &st) == 0 && st.st_size > 0)
+        ? static_cast<std::size_t>(st.st_size)
+        : 0;
+    kept_.push_back(std::move(item));
+}
+
+void SegmentRecorder::scan_existing_segments()
+{
+    kept_.clear();
+    DIR* root = ::opendir(config_.directory.c_str());
+    if (!root) {
+        return;
+    }
+    std::vector<std::string> days;
+    while (const dirent* entry = ::readdir(root)) {
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+        const std::string day_path =
+            join_path(config_.directory, entry->d_name);
+        struct stat st {};
+        if (::stat(day_path.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
+            continue;
+        }
+        days.push_back(entry->d_name);
+    }
+    ::closedir(root);
+    std::sort(days.begin(), days.end());
+    for (const auto& day : days) {
+        const std::string day_path = join_path(config_.directory, day);
+        DIR* folder = ::opendir(day_path.c_str());
+        if (!folder) {
+            continue;
+        }
+        std::vector<std::string> names;
+        while (const dirent* entry = ::readdir(folder)) {
+            const std::string name = entry->d_name;
+            if (name.size() > 4 &&
+                name.compare(name.size() - 4, 4, ".m4s") == 0) {
+                names.push_back(name);
+            }
+        }
+        ::closedir(folder);
+        std::sort(names.begin(), names.end());
+        for (const auto& name : names) {
+            remember_closed_segment(
+                join_path(day_path, name),
+                static_cast<double>(config_.segment_sec));
+        }
+    }
+}
+
+bool SegmentRecorder::over_retain() const
+{
+    if (kept_.size() <= 1) {
+        return false;
+    }
+    double duration = 0;
+    std::size_t bytes = 0;
+    for (const auto& item : kept_) {
+        duration += item.duration_sec;
+        bytes += item.bytes;
+    }
+    const std::size_t max_bytes =
+        config_.max_bytes_mb > 0
+            ? static_cast<std::size_t>(config_.max_bytes_mb) * 1024 * 1024
+            : 0;
+    if (config_.retain_sec > 0 &&
+        duration > static_cast<double>(config_.retain_sec)) {
+        return true;
+    }
+    if (max_bytes > 0 && bytes > max_bytes) {
+        return true;
+    }
+    return false;
+}
+
+void SegmentRecorder::prune_retained()
+{
+    while (over_retain()) {
+        const KeptSegment old = kept_.front();
+        kept_.pop_front();
+        playlist_.drop_front_if(old.filename);
+        if (::unlink(old.path.c_str()) == 0) {
+            std::printf("[record] drop %s\n", old.path.c_str());
+        }
+        delete_relative(old.path);
+        const std::string day_dir = join_path(config_.directory, old.day);
+        bool has_media = false;
+        if (DIR* folder = ::opendir(day_dir.c_str())) {
+            while (const dirent* entry = ::readdir(folder)) {
+                const std::string name = entry->d_name;
+                if (name.size() > 4 &&
+                    name.compare(name.size() - 4, 4, ".m4s") == 0) {
+                    has_media = true;
+                    break;
+                }
+            }
+            ::closedir(folder);
+        }
+        if (!has_media && old.day != current_day_) {
+            const std::string init_path = join_path(day_dir, "init.mp4");
+            const std::string index_path = join_path(day_dir, "index.m3u8");
+            ::unlink(init_path.c_str());
+            ::unlink(index_path.c_str());
+            delete_relative(init_path);
+            delete_relative(index_path);
+            ::rmdir(day_dir.c_str());
+        } else if (old.day != current_day_) {
+            rewrite_day_playlist(old.day, true);
+        }
+    }
+}
+
+void SegmentRecorder::rewrite_day_playlist(const std::string& day, bool ended)
+{
+    if (day.empty() || (day == current_day_ && playlist_.active())) {
+        return;
+    }
+    const std::string day_dir = join_path(config_.directory, day);
+    const std::string index_path = join_path(day_dir, "index.m3u8");
+    HlsPlaylist playlist;
+    if (!playlist.begin(index_path, config_.segment_sec)) {
+        return;
+    }
+    for (const auto& item : kept_) {
+        if (item.day == day) {
+            playlist.append(item.filename, item.duration_sec);
+        }
+    }
+    if (ended) {
+        playlist.finish();
+    }
+    upload_relative(index_path);
 }
 
 void SegmentRecorder::close_current_segment(bool end_playlist)
@@ -289,7 +462,9 @@ void SegmentRecorder::close_current_segment(bool end_playlist)
                 duration = static_cast<double>(config_.segment_sec);
             }
             playlist_.append(filename_of(current_media_path_), duration);
+            remember_closed_segment(current_media_path_, duration);
             upload_relative(current_media_path_);
+            prune_retained();
             if (playlist_.active()) {
                 upload_relative(playlist_.path());
             }
@@ -335,6 +510,11 @@ bool SegmentRecorder::ensure_session(
         return false;
     }
     current_day_ = filename_of(day_dir);
+    for (const auto& item : kept_) {
+        if (item.day == current_day_) {
+            playlist_.append(item.filename, item.duration_sec);
+        }
+    }
     session_ready_ = true;
     upload_relative(init_path);
     upload_relative(playlist_.path());
@@ -369,6 +549,11 @@ bool SegmentRecorder::open_next_segment(
         }
         playlist_.begin(join_path(day_dir, "index.m3u8"), config_.segment_sec);
         current_day_ = day;
+        for (const auto& item : kept_) {
+            if (item.day == current_day_) {
+                playlist_.append(item.filename, item.duration_sec);
+            }
+        }
         session_ready_ = true;
         upload_relative(init_path);
         upload_relative(playlist_.path());

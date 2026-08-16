@@ -21,16 +21,19 @@ public:
 
     void enqueue(const std::string& local_path,
                  const std::string& object_key) override;
+    void enqueue_delete(const std::string& object_key) override;
     void stop() override;
 
 private:
     struct Item {
         std::string local_path;
         std::string object_key;
+        bool remove{false};
     };
 
     void worker_loop();
     bool put_file(const Item& item) const;
+    bool delete_object(const Item& item) const;
 
     std::string base_url_;
     std::string token_;
@@ -44,6 +47,7 @@ private:
 class NullSegmentUploader final : public ISegmentUploader {
 public:
     void enqueue(const std::string&, const std::string&) override {}
+    void enqueue_delete(const std::string&) override {}
     void stop() override {}
 };
 
