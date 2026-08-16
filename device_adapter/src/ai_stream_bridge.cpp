@@ -45,10 +45,10 @@ bool AiStreamBridge::register_track(int width, int height, int frame_rate)
     media::StreamTrack track;
     track.stream_id = 2;
     track.type = media::MediaType::Video;
-    track.codec = media::Codec::H264;
-    track.width = width;
-    track.height = height;
-    track.frame_rate = frame_rate;
+    track.video.codec = media::Codec::H264;
+    track.video.width = width;
+    track.video.height = height;
+    track.video.frame_rate = frame_rate;
     track.clock_rate = 90000;
     media_source_->set_track(std::move(track));
     return true;
