@@ -49,12 +49,14 @@ bool Application::start()
         });
     device_->set_detection_hub(detections);
 
-    const bool protocols_enabled = !protocols_.empty();
-    if (protocols_enabled && !poller_runtime_.start(options_.profile.poller_count)) {
-        media_.reset();
-        return false;
+    const bool has_protocols = !protocols_.empty();
+    if (has_protocols) {
+        if (!poller_runtime_.start(options_.profile.poller_count)) {
+            media_.reset();
+            return false;
+        }
+        poller_started_ = true;
     }
-    poller_started_ = protocols_enabled;
 
     if (!device_->start(media_)) {
         if (poller_started_) {
@@ -66,7 +68,7 @@ bool Application::start()
     }
     device_started_ = true;
 
-    if (protocols_enabled) {
+    if (has_protocols) {
         ProtocolContext context;
         context.media_source = media_;
         context.detections = detections;
